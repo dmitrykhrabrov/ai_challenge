@@ -1,0 +1,2013 @@
+{
+  "docs_why": {
+    "model": "deepseek-flash",
+    "source": [
+      "https://api-docs.deepseek.com/guides/thinking_mode.md",
+      "https://api-docs.deepseek.com/api/create-chat-completion.md"
+    ],
+    "why_chosen": "На flash temperature работает только при reasoning=none; при thinking temperature принимается, но не влияет. top_p наоборот: при thinking действует в 0.95–1.0 (<0.95 → 0.95); при none зафиксирован в 1.0 и игнорируется. Финальная сетка (без лишних запросов): none×temperature — основной эффект; high×top_p на story_s — единственный sampling-рычаг в thinking. Проверки «none×top_p игнорируется» и «high×temperature игнорируется» уже подтверждены прошлым прогоном и из сетки убраны.",
+    "matrix": {
+      "temperature": {
+        "non_thinking": "действует, диапазон 0–2",
+        "thinking": "игнорируется (ошибки нет)"
+      },
+      "top_p": {
+        "non_thinking": "игнорируется, фикс 1.0",
+        "thinking": "действует 0.95–1.0; ниже 0.95 → как 0.95"
+      },
+      "top_k": "нет / игнор",
+      "presence_frequency_penalty": "нет эффекта"
+    }
+  },
+  "settings": {
+    "url": "http://127.0.0.1:8000/chat",
+    "max_tokens": 8000,
+    "repeats_acc": 5,
+    "repeats_gen": 5,
+    "concurrency": 8,
+    "main_effort": "none",
+    "temperatures_none": [
+      0.0,
+      1.0,
+      2.0
+    ],
+    "high_top_p": [
+      0.95,
+      1.0
+    ],
+    "high_top_p_task": "story_s",
+    "skipped": [
+      "none_top_p",
+      "high_temperature"
+    ],
+    "ppl_model": "ai-forever/rugpt3small_based_on_gpt2",
+    "ppl_device": "cpu"
+  },
+  "api_totals": {
+    "время_стены_сек": 149.89,
+    "время_api_сумма_сек": 636.78,
+    "время_api_сек": 636.78,
+    "токены_reasoning": 16505,
+    "токены_всего": 48817,
+    "note": "время_стены_сек — wall-clock async-пакета; время_api_сумма_сек — сумма длительностей запросов; без локального perplexity"
+  },
+  "prior_confirmed_checks": {
+    "source": "предыдущий полный прогон task4_results.json + доки DeepSeek flash",
+    "items": [
+      {
+        "check": "none × top_p ∈ {0.5, 0.95, 1.0} при temperature=0",
+        "result": "perplexity/letter_ratio почти не менялись (story_s ppl ~69–72). Подтверждает док: в non-thinking top_p на flash зафиксирован в 1.0.",
+        "in_final_run": false
+      },
+      {
+        "check": "high × temperature ∈ {0, 2} на story_s",
+        "result": "стоимость почти одинаковая (~70 с; reasoning ~8459 vs ~9099), letter_ratio=1.0, ppl ~60–75. Temperature в thinking не рулит; дороговизна — сам reasoning под constraint «слова на С».",
+        "in_final_run": false
+      },
+      {
+        "check": "high × temperature на bat_ball/sheep",
+        "result": "accuracy=1.0 при t=0 и t=2; reasoning умеренный (сотни токенов на 5 вызовов). Ещё одно подтверждение игнора temperature при high.",
+        "in_final_run": false
+      }
+    ]
+  },
+  "ppl_scoring": {
+    "model": "ai-forever/rugpt3small_based_on_gpt2",
+    "device": "cpu",
+    "n_texts": 40,
+    "batch_size": 1,
+    "max_length": 256,
+    "load_and_score_sec": 22.4,
+    "note": "Время PPL не входит во время_api_сек / токены_reasoning строк прогона"
+  },
+  "result": {
+    "title": "Результат: примеры ответов с разной температурой и выводы по их использованию",
+    "examples_by_temperature": [
+      {
+        "temperature": 0.0,
+        "effort": "none",
+        "samples": [
+          {
+            "task": "bat_ball",
+            "kind": "accuracy",
+            "answer_example": "Давайте разберёмся шаг за шагом.\n\nПусть мяч стоит \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) доллар.  \n\nВместе они стоят:  \n\\( x + (x + 1) = 1.10 \\)  \n\n\\( 2x + 1 = 1.10 \\)  \n\\( 2x = 0.10 \\)  \n\\( x = 0.05 \\)  \n\nМяч стоит 5 центов.\n\nОТВЕТ=0.05",
+            "время_api_сек": 12.36,
+            "токены_reasoning": 0,
+            "токены_всего": 847,
+            "accuracy": "5/5",
+            "unique_answers": [
+              "0.05"
+            ]
+          },
+          {
+            "task": "sheep",
+            "kind": "accuracy",
+            "answer_example": "Давайте разберёмся:  \nУ фермера было 17 овец.  \n«Все кроме 9 умерли» — значит, умерли все, кроме 9, то есть 9 овец остались живы.  \n\nОТВЕТ=9",
+            "время_api_сек": 11.71,
+            "токены_reasoning": 0,
+            "токены_всего": 502,
+            "accuracy": "5/5",
+            "unique_answers": [
+              "9"
+            ]
+          },
+          {
+            "task": "story_s",
+            "kind": "generation",
+            "answer_example": "Снежный самум свистел, сгибая сосны. Старый странник, ссутулившись, смотрел севернее. Следы санок сливались совсем. Собака, скуля, семенила следом. Смеркалось. Скорее, спасительное селение!",
+            "время_api_сек": 15.03,
+            "токены_reasoning": 0,
+            "токены_всего": 1001,
+            "diversity": 1.0,
+            "letter_ratio": 0.994,
+            "perplexity": 78.223
+          },
+          {
+            "task": "list_s",
+            "kind": "generation",
+            "answer_example": "Стол, стул, солнце, снег, собака, стакан, сад, самолёт.",
+            "время_api_сек": 9.44,
+            "токены_reasoning": 0,
+            "токены_всего": 390,
+            "diversity": 0.2,
+            "letter_ratio": 1.0,
+            "perplexity": 77.062
+          }
+        ]
+      },
+      {
+        "temperature": 1.0,
+        "effort": "none",
+        "samples": [
+          {
+            "task": "bat_ball",
+            "kind": "accuracy",
+            "answer_example": "Давайте обозначим цену мяча как \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) доллар.  \n\nВместе:  \n\\( x + (x + 1) = 1.10 \\)  \n\\( 2x + 1 = 1.10 \\)  \n\\( 2x = 0.10 \\)  \n\\( x = 0.05 \\)  \n\nМяч стоит 5 центов.\n\nОТВЕТ=0.05",
+            "время_api_сек": 10.8,
+            "токены_reasoning": 0,
+            "токены_всего": 797,
+            "accuracy": "5/5",
+            "unique_answers": [
+              "0.05"
+            ]
+          },
+          {
+            "task": "sheep",
+            "kind": "accuracy",
+            "answer_example": "Если все кроме 9 умерли, значит осталось 9 овец.  \nОТВЕТ=9",
+            "время_api_сек": 9.89,
+            "токены_reasoning": 0,
+            "токены_всего": 397,
+            "accuracy": "5/5",
+            "unique_answers": [
+              "9"
+            ]
+          },
+          {
+            "task": "story_s",
+            "kind": "generation",
+            "answer_example": "Северный странник спал среди сосен. Снег скрипел, северный сивер сиял. Странник смотрел: синие сосны, серебристые сугробы. Сова серо-серая сохатого сопровождала. Смело сам ступал, следуя северной стезей. Сказочно!",
+            "время_api_сек": 15.37,
+            "токены_reasoning": 0,
+            "токены_всего": 998,
+            "diversity": 1.0,
+            "letter_ratio": 0.995,
+            "perplexity": 86.302
+          },
+          {
+            "task": "list_s",
+            "kind": "generation",
+            "answer_example": "Стол, стул, солнце, снег, слон, собака, стакан, самолёт.",
+            "время_api_сек": 10.66,
+            "токены_reasoning": 0,
+            "токены_всего": 382,
+            "diversity": 1.0,
+            "letter_ratio": 1.0,
+            "perplexity": 70.959
+          }
+        ]
+      },
+      {
+        "temperature": 2.0,
+        "effort": "none",
+        "samples": [
+          {
+            "task": "bat_ball",
+            "kind": "accuracy",
+            "answer_example": "Давайте решим по шагам.\n\nПусть цена мяча = \\( x \\) долларов.  \nТогда цена биты = \\( x + 1 \\) доллар (на 1 доллар дороже).  \n\nПо условию:  \n\\( x + (x+1) = 1.10 \\)  \n\\( 2x + 1 = 1.10 \\)  \n\\( 2x = 0.10 \\)  \n\\( x = 0.05 \\).\n\n**Ответ:** 0.05 доллара.\n\nОТВЕТ=0.05",
+            "время_api_сек": 184.65,
+            "токены_reasoning": 0,
+            "токены_всего": 11107,
+            "accuracy": "3/5",
+            "unique_answers": [
+              "0.05",
+              "1",
+              "10"
+            ]
+          },
+          {
+            "task": "sheep",
+            "kind": "accuracy",
+            "answer_example": "Конечно! Если стало ясно сформулировано — все, кроме 9, умерли => 9 овец остались.\nОТВЕТ=9",
+            "время_api_сек": 103.16,
+            "токены_reasoning": 0,
+            "токены_всего": 6171,
+            "accuracy": "4/5",
+            "unique_answers": [
+              "9",
+              "см⬇～п⇒по―ьте."
+            ]
+          },
+          {
+            "task": "story_s",
+            "kind": "generation",
+            "answer_example": "Сумрачной самотной considerably стужею… северный странник｜) слыхал｜).",
+            "время_api_сек": 102.32,
+            "токены_reasoning": 0,
+            "токены_всего": 7059,
+            "diversity": 1.0,
+            "letter_ratio": 0.614,
+            "perplexity": 1140.063
+          },
+          {
+            "task": "list_s",
+            "kind": "generation",
+            "answer_example": "Стол, стул, salt water crucian, снег, сок, сын, собака, стекло",
+            "время_api_сек": 13.55,
+            "токены_reasoning": 0,
+            "токены_всего": 438,
+            "diversity": 1.0,
+            "letter_ratio": 0.718,
+            "perplexity": 179.903
+          }
+        ]
+      }
+    ],
+    "accuracy_by_temperature": {
+      "0.0": "bat_ball 5/5, sheep 5/5",
+      "1.0": "bat_ball 5/5, sheep 5/5",
+      "2.0": "bat_ball 3/5, sheep 4/5"
+    },
+    "usage_conclusions": [
+      "temperature=0 (reasoning=none): ответы почти детерминированные — для фактов, коротких точных ответов, когда важна стабильность (у нас выше доля верных на ловушках).",
+      "temperature≈1: баланс разнообразия и связности — черновики, списки, мягкий креатив; смотреть letter_ratio и perplexity на генерации.",
+      "temperature=2: максимум случайности — идеи/варианты, но чаще срыв правила «слова на С», рост perplexity и падение accuracy на задачах с одним верным ответом.",
+      "На deepseek-flash при reasoning=high temperature не крутим (игнор по докам); для sampling в thinking смотреть top_p в узком окне 0.95–1.0 (фаза high_top_p).",
+      "top_p при reasoning=none на flash игнорируется — в финальном прогоне не гоняли."
+    ],
+    "answers_saved": "Полные ответы API лежат в task4_results.json → rows[].runs[].answer (все повторы, не только пример в Результате)."
+  },
+  "conclusion": {
+    "docs_reminder": "На flash temperature работает только при reasoning=none; при thinking temperature принимается, но не влияет. top_p наоборот: при thinking действует в 0.95–1.0 (<0.95 → 0.95); при none зафиксирован в 1.0 и игнорируется. Финальная сетка (без лишних запросов): none×temperature — основной эффект; high×top_p на story_s — единственный sampling-рычаг в thinking. Проверки «none×top_p игнорируется» и «high×temperature игнорируется» уже подтверждены прошлым прогоном и из сетки убраны.",
+    "none_temperature": {
+      "accuracy": "bat_ball@t=0.0/p=None→1.0; sheep@t=0.0/p=None→1.0; bat_ball@t=1.0/p=None→1.0; sheep@t=1.0/p=None→1.0; bat_ball@t=2.0/p=None→0.6; sheep@t=2.0/p=None→0.8",
+      "generation": "story_s@t=0.0/p=None→div=1.0,S=0.994,ppl=78.223; list_s@t=0.0/p=None→div=0.2,S=1.0,ppl=77.062; story_s@t=1.0/p=None→div=1.0,S=0.995,ppl=86.302; list_s@t=1.0/p=None→div=1.0,S=1.0,ppl=70.959; story_s@t=2.0/p=None→div=1.0,S=0.614,ppl=1140.063; list_s@t=2.0/p=None→div=1.0,S=0.718,ppl=179.903",
+      "api_cost": "время_api_сек=498.9 токены_reasoning=0 токены_всего=30089",
+      "expect": "с ростом temperature: accuracy↓ / diversity↑ / perplexity↑"
+    },
+    "high_top_p": {
+      "accuracy": "—",
+      "generation": "story_s@t=None/p=0.95→div=1.0,S=1.0,ppl=66.05; story_s@t=None/p=1.0→div=1.0,S=0.994,ppl=72.066",
+      "api_cost": "время_api_сек=137.8 токены_reasoning=16505 токены_всего=18728",
+      "expect": "при high на flash смотрим top_p 0.95 vs 1.0 (узкий диапазон); temperature в thinking не варьируем — по докам игнор"
+    },
+    "skipped_as_confirmed": "Убраны none×top_p и high×temperature — уже подтверждены прошлым прогоном/доками."
+  },
+  "rows": [
+    {
+      "kind": "accuracy",
+      "phase": "none_temperature",
+      "task": "bat_ball",
+      "expected": "0.05",
+      "effort": "none",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeats": 5,
+      "correct": 5,
+      "accuracy": 1.0,
+      "unique_answers": [
+        "0.05"
+      ],
+      "n_unique": 1,
+      "api_elapsed_sec": 12.36,
+      "reasoning_tokens": 0,
+      "total_tokens": 847,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.93,
+          "answer": "Давайте разберёмся шаг за шагом.\n\nПусть мяч стоит \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) доллар.  \n\nВместе они стоят:  \n\\( x + (x + 1) = 1.10 \\)  \n\n\\( 2x + 1 = 1.10 \\)  \n\\( 2x = 0.10 \\)  \n\\( x = 0.05 \\)  \n\nМяч стоит 5 центов.\n\nОТВЕТ=0.05",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 167,
+          "reasoning_tokens": 0,
+          "repeat_idx": 0,
+          "parsed_got": "0.05",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.51,
+          "answer": "Давайте разберёмся шаг за шагом.\n\nПусть мяч стоит \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) доллар.  \nВместе они стоят 1.10 доллара:\n\n\\[\nx + (x + 1) = 1.10\n\\]\n\n\\[\n2x + 1 = 1.10\n\\]\n\n\\[\n2x = 0.10\n\\]\n\n\\[\nx = 0.05\n\\]\n\nМяч стоит 5 центов.\n\nОТВЕТ=0.05",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 175,
+          "reasoning_tokens": 0,
+          "repeat_idx": 1,
+          "parsed_got": "0.05",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.15,
+          "answer": "Давайте разберёмся шаг за шагом.\n\nПусть мяч стоит \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) доллар.  \n\nВместе они стоят 1.10 доллара:  \n\\( x + (x + 1) = 1.10 \\)  \n\\( 2x + 1 = 1.10 \\)  \n\\( 2x = 0.10 \\)  \n\\( x = 0.05 \\)\n\nМяч стоит 5 центов.\n\nОТВЕТ=0.05",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 174,
+          "reasoning_tokens": 0,
+          "repeat_idx": 2,
+          "parsed_got": "0.05",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.45,
+          "answer": "Давайте разберёмся шаг за шагом.\n\nПусть мяч стоит \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) доллар.  \n\nВместе:  \n\\( x + (x + 1) = 1.10 \\)  \n\\( 2x + 1 = 1.10 \\)  \n\\( 2x = 0.10 \\)  \n\\( x = 0.05 \\)  \n\nМяч стоит 5 центов.\n\nОТВЕТ=0.05",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 164,
+          "reasoning_tokens": 0,
+          "repeat_idx": 3,
+          "parsed_got": "0.05",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.32,
+          "answer": "Давайте разберёмся шаг за шагом.\n\nПусть мяч стоит \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) доллар.  \n\nВместе они стоят:  \n\\( x + (x + 1) = 1.10 \\)  \n\n\\( 2x + 1 = 1.10 \\)  \n\n\\( 2x = 0.10 \\)  \n\n\\( x = 0.05 \\)  \n\nМяч стоит 5 центов.\n\nОТВЕТ=0.05",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 167,
+          "reasoning_tokens": 0,
+          "repeat_idx": 4,
+          "parsed_got": "0.05",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "kind": "accuracy",
+      "phase": "none_temperature",
+      "task": "sheep",
+      "expected": "9",
+      "effort": "none",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeats": 5,
+      "correct": 5,
+      "accuracy": 1.0,
+      "unique_answers": [
+        "9"
+      ],
+      "n_unique": 1,
+      "api_elapsed_sec": 11.71,
+      "reasoning_tokens": 0,
+      "total_tokens": 502,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.55,
+          "answer": "Давайте разберёмся:  \nУ фермера было 17 овец.  \n«Все кроме 9 умерли» — значит, умерли все, кроме 9, то есть 9 овец остались живы.  \n\nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 101,
+          "reasoning_tokens": 0,
+          "repeat_idx": 0,
+          "parsed_got": "9",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.44,
+          "answer": "Давайте разберём:  \nУ фермера было 17 овец.  \n«Все кроме 9 умерли» — значит, умерли все, кроме 9, то есть 9 овец остались живы.  \n\nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 100,
+          "reasoning_tokens": 0,
+          "repeat_idx": 1,
+          "parsed_got": "9",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.4,
+          "answer": "Давайте разберёмся:  \nУ фермера было 17 овец.  \n«Все кроме 9 умерли» — значит, умерли все, кроме 9, то есть 9 овец остались живы.  \n\nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 101,
+          "reasoning_tokens": 0,
+          "repeat_idx": 2,
+          "parsed_got": "9",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.23,
+          "answer": "Давайте разберём:  \nУ фермера было 17 овец.  \n«Все кроме 9 умерли» — значит, умерли все, кроме 9, то есть 9 овец остались живы.  \n\nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 100,
+          "reasoning_tokens": 0,
+          "repeat_idx": 3,
+          "parsed_got": "9",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.09,
+          "answer": "Давайте разберём:  \nУ фермера было 17 овец.  \n«Все кроме 9 умерли» — значит, умерли все, кроме 9, то есть 9 овец остались живы.  \n\nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 100,
+          "reasoning_tokens": 0,
+          "repeat_idx": 4,
+          "parsed_got": "9",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "kind": "generation",
+      "phase": "none_temperature",
+      "task": "story_s",
+      "letter": "с",
+      "effort": "none",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeats": 5,
+      "n_unique_texts": 5,
+      "diversity": 1.0,
+      "mean_letter_ratio": 0.994,
+      "mean_perplexity": 78.223,
+      "api_elapsed_sec": 15.03,
+      "reasoning_tokens": 0,
+      "total_tokens": 1001,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.82,
+          "answer": "Снежный самум свистел, сгибая сосны. Старый странник, ссутулившись, смотрел севернее. Следы санок сливались совсем. Собака, скуля, семенила следом. Смеркалось. Скорее, спасительное селение!",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 173,
+          "reasoning_tokens": 0,
+          "repeat_idx": 0,
+          "letter_stats": {
+            "words": 22,
+            "ok": 22,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 72.885
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.92,
+          "answer": "Снежный странник смело смотрел северными склонами. Седой северный сияющий свет сопровождал смельчака. Сосны, сугробы, скалы — суровые спутники. Стужа сковывала, согревала сила сердца. Смелый странник сражался, сохранял стойкость. Сказочная северная страна стала судьбой.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 199,
+          "reasoning_tokens": 0,
+          "repeat_idx": 1,
+          "letter_stats": {
+            "words": 32,
+            "ok": 32,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 65.316
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.96,
+          "answer": "Снежный саамский странник с собакой скитался среди сопок. Свирепый северный сиверко срывал сосульки, сгибал сосенки. Старик согревался спиртом, сожалел спутника. Собака скулила, старалась следовать следом. Стемнело совсем скоро. Смельчак соорудил становище, соорудил спальник, сберег силы.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 215,
+          "reasoning_tokens": 0,
+          "repeat_idx": 2,
+          "letter_stats": {
+            "words": 35,
+            "ok": 35,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 60.699
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 3.37,
+          "answer": "Снежный странник смело смотрел северными склонами. Седой сумрак стлался сизым саваном. Студёный северный сиверко свистел, сгибая сосны. Странник стойко следовал своей стезёй, согреваясь собственным сердцем. Среди скал спасительным светом сияла северная звезда. Сказочно суров север!",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 205,
+          "reasoning_tokens": 0,
+          "repeat_idx": 3,
+          "letter_stats": {
+            "words": 35,
+            "ok": 34,
+            "ratio": 0.971,
+            "bad": [
+              "звезда"
+            ]
+          },
+          "perplexity": 97.5
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.96,
+          "answer": "Снежный странник смело смотрел северными склонами. Седой сумрак стелился сизым саваном. Студёный северный сиверко свистел, сгибая сосны. Странник стойко следовал своей стезёй, согреваясь собственным сердцем. Светлая сила сберегла смельчака. Скоро сказка сказывается — северная стойкость славится.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 209,
+          "reasoning_tokens": 0,
+          "repeat_idx": 4,
+          "letter_stats": {
+            "words": 35,
+            "ok": 35,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 94.717
+        }
+      ]
+    },
+    {
+      "kind": "generation",
+      "phase": "none_temperature",
+      "task": "list_s",
+      "letter": "с",
+      "effort": "none",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeats": 5,
+      "n_unique_texts": 1,
+      "diversity": 0.2,
+      "mean_letter_ratio": 1.0,
+      "mean_perplexity": 77.062,
+      "api_elapsed_sec": 9.44,
+      "reasoning_tokens": 0,
+      "total_tokens": 390,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 1.82,
+          "answer": "Стол, стул, солнце, снег, собака, стакан, сад, самолёт.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 78,
+          "reasoning_tokens": 0,
+          "repeat_idx": 0,
+          "letter_stats": {
+            "words": 8,
+            "ok": 8,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 77.062
+        },
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 1.87,
+          "answer": "Стол, стул, солнце, снег, собака, стакан, сад, самолёт.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 78,
+          "reasoning_tokens": 0,
+          "repeat_idx": 1,
+          "letter_stats": {
+            "words": 8,
+            "ok": 8,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 77.062
+        },
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 2.08,
+          "answer": "Стол, стул, солнце, снег, собака, стакан, сад, самолёт.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 78,
+          "reasoning_tokens": 0,
+          "repeat_idx": 2,
+          "letter_stats": {
+            "words": 8,
+            "ok": 8,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 77.062
+        },
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 1.78,
+          "answer": "Стол, стул, солнце, снег, собака, стакан, сад, самолёт.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 78,
+          "reasoning_tokens": 0,
+          "repeat_idx": 3,
+          "letter_stats": {
+            "words": 8,
+            "ok": 8,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 77.062
+        },
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          },
+          "elapsed_sec": 1.89,
+          "answer": "Стол, стул, солнце, снег, собака, стакан, сад, самолёт.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 78,
+          "reasoning_tokens": 0,
+          "repeat_idx": 4,
+          "letter_stats": {
+            "words": 8,
+            "ok": 8,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 77.062
+        }
+      ]
+    },
+    {
+      "kind": "accuracy",
+      "phase": "none_temperature",
+      "task": "bat_ball",
+      "expected": "0.05",
+      "effort": "none",
+      "temperature": 1.0,
+      "top_p": null,
+      "repeats": 5,
+      "correct": 5,
+      "accuracy": 1.0,
+      "unique_answers": [
+        "0.05"
+      ],
+      "n_unique": 1,
+      "api_elapsed_sec": 10.8,
+      "reasoning_tokens": 0,
+      "total_tokens": 797,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.54,
+          "answer": "Давайте обозначим цену мяча как \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) доллар.  \n\nВместе:  \n\\( x + (x + 1) = 1.10 \\)  \n\\( 2x + 1 = 1.10 \\)  \n\\( 2x = 0.10 \\)  \n\\( x = 0.05 \\)  \n\nМяч стоит 5 центов.\n\nОТВЕТ=0.05",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 157,
+          "reasoning_tokens": 0,
+          "repeat_idx": 0,
+          "parsed_got": "0.05",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.15,
+          "answer": "Пусть мяч стоит \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) долларов.  \n\nУравнение:  \n\\( x + (x + 1) = 1.10 \\)  \n\\( 2x + 1 = 1.10 \\)  \n\\( 2x = 0.10 \\)  \n\\( x = 0.05 \\)  \n\nМяч стоит 5 центов.  \n\nОТВЕТ=0.05",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 154,
+          "reasoning_tokens": 0,
+          "repeat_idx": 1,
+          "parsed_got": "0.05",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.04,
+          "answer": "Давайте решим шаг за шагом.\n\nПусть мяч стоит \\(x\\) долларов.  \nТогда бита стоит \\(x + 1\\) доллар.\n\nВместе:  \n\\(x + (x + 1) = 1.10\\)  \n\\(2x + 1 = 1.10\\)  \n\\(2x = 0.10\\)  \n\\(x = 0.05\\)\n\nМяч стоит 5 центов.\n\nОТВЕТ=0.05",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 158,
+          "reasoning_tokens": 0,
+          "repeat_idx": 2,
+          "parsed_got": "0.05",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.15,
+          "answer": "Давай разберёмся шаг за шагом.  \n\nОбозначим цену мяча как \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) долларов.  \n\nВместе они стоят 1.10:  \n\n\\[\nx + (x + 1) = 1.10\n\\]\n\n\\[\n2x + 1 = 1.10\n\\]\n\n\\[\n2x = 0.10\n\\]\n\n\\[\nx = 0.05\n\\]\n\nМяч стоит 5 центов.\n\nОТВЕТ=0.05",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 180,
+          "reasoning_tokens": 0,
+          "repeat_idx": 3,
+          "parsed_got": "0.05",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 1.92,
+          "answer": "Давайте обозначим цену мяча как \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) доллар.  \nВместе:  \n\\( x + (x + 1) = 1.10 \\)  \n\\( 2x + 1 = 1.10 \\)  \n\\( 2x = 0.10 \\)  \n\\( x = 0.05 \\)  \n\nОТВЕТ=0.05",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 148,
+          "reasoning_tokens": 0,
+          "repeat_idx": 4,
+          "parsed_got": "0.05",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "kind": "accuracy",
+      "phase": "none_temperature",
+      "task": "sheep",
+      "expected": "9",
+      "effort": "none",
+      "temperature": 1.0,
+      "top_p": null,
+      "repeats": 5,
+      "correct": 5,
+      "accuracy": 1.0,
+      "unique_answers": [
+        "9"
+      ],
+      "n_unique": 1,
+      "api_elapsed_sec": 9.89,
+      "reasoning_tokens": 0,
+      "total_tokens": 397,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.21,
+          "answer": "Если все кроме 9 умерли, значит осталось 9 овец.  \nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 67,
+          "reasoning_tokens": 0,
+          "repeat_idx": 0,
+          "parsed_got": "9",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.09,
+          "answer": "Давайте разберём условие:  \n«Все кроме 9 умерли» — значит, умерли все, кроме 9 овец, то есть 9 овец остались живы.  \n\nПервоначально было 17 овец, из них 9 остались.  \n\nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 112,
+          "reasoning_tokens": 0,
+          "repeat_idx": 1,
+          "parsed_got": "9",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 1.5,
+          "answer": "Все кроме 9 умерли — значит, осталось 9 овец.\n\nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 66,
+          "reasoning_tokens": 0,
+          "repeat_idx": 2,
+          "parsed_got": "9",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.25,
+          "answer": "Осталось 9 овец, потому что «все кроме 9 умерли» означает, что умерли все, кроме этих 9.  \nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 82,
+          "reasoning_tokens": 0,
+          "repeat_idx": 3,
+          "parsed_got": "9",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 1.84,
+          "answer": "Осталось 9 овец, потому что все, кроме 9, умерли.  \nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 70,
+          "reasoning_tokens": 0,
+          "repeat_idx": 4,
+          "parsed_got": "9",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "kind": "generation",
+      "phase": "none_temperature",
+      "task": "story_s",
+      "letter": "с",
+      "effort": "none",
+      "temperature": 1.0,
+      "top_p": null,
+      "repeats": 5,
+      "n_unique_texts": 5,
+      "diversity": 1.0,
+      "mean_letter_ratio": 0.995,
+      "mean_perplexity": 86.302,
+      "api_elapsed_sec": 15.37,
+      "reasoning_tokens": 0,
+      "total_tokens": 998,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.99,
+          "answer": "Северный странник спал среди сосен. Снег скрипел, северный сивер сиял. Странник смотрел: синие сосны, серебристые сугробы. Сова серо-серая сохатого сопровождала. Смело сам ступал, следуя северной стезей. Сказочно!",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 188,
+          "reasoning_tokens": 0,
+          "repeat_idx": 0,
+          "letter_stats": {
+            "words": 28,
+            "ok": 28,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 93.027
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.78,
+          "answer": "Седой странник спал среди снегов. Свирепый северный сквозняк студил спину, сгибал сосны. Снова слышалось слабое сияние. Странник собрал силы, сделал свой спасительный срок. Следы сами стелили совершенную стезю.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 180,
+          "reasoning_tokens": 0,
+          "repeat_idx": 1,
+          "letter_stats": {
+            "words": 28,
+            "ok": 28,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 93.488
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 3.25,
+          "answer": "Северный странник смело смотрел сквозь снежную стену. Седой сумрак стлался сизым саваном. Студёный самум свистел, срывал снежинки. Странник ссутулился, сжал санки, собрал силы. Сзади сплошная сугробная стена, спереди — спасительная сопка. Скорее, старик, смелее!",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 209,
+          "reasoning_tokens": 0,
+          "repeat_idx": 2,
+          "letter_stats": {
+            "words": 33,
+            "ok": 33,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 72.984
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 3.44,
+          "answer": "Северный странник с собакой сурово смотрел сквозь снежную стену. Сизые сумерки спускались среди сосен, стылых скал. Собака следом сопела, согревая спутника. Снег скоро стал сплошной стеной, скрывая сопки. Странник сказал: «Скоро стойбище, совсем скоро». Собака согласно смотрела своими синими словно стеклянными глазами.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 218,
+          "reasoning_tokens": 0,
+          "repeat_idx": 3,
+          "letter_stats": {
+            "words": 42,
+            "ok": 41,
+            "ratio": 0.976,
+            "bad": [
+              "глазами"
+            ]
+          },
+          "perplexity": 66.645
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.91,
+          "answer": "Северный странник с собакой спускался с сопки. Снежные сумерки сгущались, свирепый северный сиверко свистел. Старик согревался с сушёными сухарями, слушал совиные стоны. Следом следовала серая спутница, согревая своим сопением. Скоро сказочная слава согреет сердца современников.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 203,
+          "reasoning_tokens": 0,
+          "repeat_idx": 4,
+          "letter_stats": {
+            "words": 35,
+            "ok": 35,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 105.367
+        }
+      ]
+    },
+    {
+      "kind": "generation",
+      "phase": "none_temperature",
+      "task": "list_s",
+      "letter": "с",
+      "effort": "none",
+      "temperature": 1.0,
+      "top_p": null,
+      "repeats": 5,
+      "n_unique_texts": 5,
+      "diversity": 1.0,
+      "mean_letter_ratio": 1.0,
+      "mean_perplexity": 70.959,
+      "api_elapsed_sec": 10.66,
+      "reasoning_tokens": 0,
+      "total_tokens": 382,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.07,
+          "answer": "Стол, стул, солнце, снег, слон, собака, стакан, самолёт.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 78,
+          "reasoning_tokens": 0,
+          "repeat_idx": 0,
+          "letter_stats": {
+            "words": 8,
+            "ok": 8,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 71.194
+        },
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.22,
+          "answer": "Стол, стул, солнце, снег, собака, сад, сок, слон",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 76,
+          "reasoning_tokens": 0,
+          "repeat_idx": 1,
+          "letter_stats": {
+            "words": 8,
+            "ok": 8,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 72.477
+        },
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.12,
+          "answer": "Стол, стул, снег, солнце, собака, сад, самолёт, стакан",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 77,
+          "reasoning_tokens": 0,
+          "repeat_idx": 2,
+          "letter_stats": {
+            "words": 8,
+            "ok": 8,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 74.733
+        },
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.11,
+          "answer": "Стол, стул, солнце, снег, собака, сад, слово, страна",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 75,
+          "reasoning_tokens": 0,
+          "repeat_idx": 3,
+          "letter_stats": {
+            "words": 8,
+            "ok": 8,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 66.98
+        },
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 1.0
+          },
+          "elapsed_sec": 2.14,
+          "answer": "Стол, стул, солнце, снег, собака, сад, сын, стакан",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 76,
+          "reasoning_tokens": 0,
+          "repeat_idx": 4,
+          "letter_stats": {
+            "words": 8,
+            "ok": 8,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 69.412
+        }
+      ]
+    },
+    {
+      "kind": "accuracy",
+      "phase": "none_temperature",
+      "task": "bat_ball",
+      "expected": "0.05",
+      "effort": "none",
+      "temperature": 2.0,
+      "top_p": null,
+      "repeats": 5,
+      "correct": 3,
+      "accuracy": 0.6,
+      "unique_answers": [
+        "0.05",
+        "1",
+        "10"
+      ],
+      "n_unique": 3,
+      "api_elapsed_sec": 184.65,
+      "reasoning_tokens": 0,
+      "total_tokens": 11107,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 2.52,
+          "answer": "Давайте решим по шагам.\n\nПусть цена мяча = \\( x \\) долларов.  \nТогда цена биты = \\( x + 1 \\) доллар (на 1 доллар дороже).  \n\nПо условию:  \n\\( x + (x+1) = 1.10 \\)  \n\\( 2x + 1 = 1.10 \\)  \n\\( 2x = 0.10 \\)  \n\\( x = 0.05 \\).\n\n**Ответ:** 0.05 доллара.\n\nОТВЕТ=0.05",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 172,
+          "reasoning_tokens": 0,
+          "repeat_idx": 0,
+          "parsed_got": "0.05",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 40.93,
+          "answer": "Классическая задача-ловушка.\n\nДешёвые рассуждения: чаще первым делом думают:  \nОНА (ответ 10): что ребаёнок не эсти нуб. просто цена мяча бандар логикон две умники прав  \nно суати луи = тредаво тут дoiş...\n\nитарей дом — если катего Всад: Бата = М +1, вместве  \nЦ би+ он – 10 будет кроить это помер ошибкроуг прос бато.\n\nЭферме логичес финано иг его реши сто? чита :)\n\nчё вощ реш:\n\nЛе mi вата, :Своб шшу кат В доло м - ми а \n\nобъек ла a cost. руб nель bru С Я сто\n\nэкол сде ли лог eq фи的通 соз ст поп ар там   прост; & i тут крути десьмb? Приравня I см n нат\nSot ди и вот N ves foc shear роз till еёв ит\n\nНа kris стор ми b ма Б ит о до с , соот Ç вал plus mib.\n\nCost Об it.. суит форму равен ⇒ → но мне пос про L суит сеть but I may продол:\n\n(мы знаем его сосё по: с = р +\n\nПроведи и педан б расс – эмоцией некого ста про solve для сти след чё-н кро слож пл ре ¬ так **фор моз всех моде реали зава пом бе ..   \n\nТак) Тот бади б сп г Pers огу н :\n\nЕсли пе = дол xi пре I So логи ж: тот     у с.. нар ��: summa bilat = But объ ком бел    \n\nПо no эк пол си на bas lot!\n\nита И вот ум case кла тут fam ска сли ши - Кор правым че вой miam ва\n\n− прав∃ бу ⇔ Вот получ равен ту ‑ он: / B ! дас İ  \n\nЛан бала β X тогда оп moy Muн да выб дол н   \n               ст * ог баит урав к X: вме ит:\n\nмяс | X\n\nПа симво склад мг получи L ур …\n\nэн快快 Не хро от : же ска ско:\n\n♣ час ак…\n\nЯ сам про:\n\nфор TCN oat под⋅ дет + ис b)+,     \nОбоз: бита b стоимость mu !\nsi ба Σ t и by bb, //\n\n\nи урав bu И : XY .\n\n1)+ b₏ Δ marg+\n\nдэн    \n∩ (μ ба еq им бить мар писал сти Í:\n\nНо  $  a T М ба ✌ потом in два ур ..\nAnd m мне λ⚡;!> эк =( ...\n\nВ неll спра ум у его \nо ТЗ= ридел:\n\n①                          {\n\nlog I   забы ø ма       пок ☠ пок))\n\nсти: ме st и сти: ≈ . ..\n\nон я за.\n\nи…\n\nНак умн C о B ≃ потом :\n\nби+ ± всё ∩ 客 | via пр то лог! да вот обы та сум прост real :\n⌊⚡     Σ че Пу да В см..\n\nки ак нуж для via ✨ Фор\n∫ в Fe её S ..\n\nFi **Просто через ро**\n\nль точ оконча всё сразу вы те один correct у **Нью** так :\n\nпу Пу am кот k ба mi мяч.,. О уже bat (bt b само μ=\n\nVi : sum Bat M all вместе имают сум k баз об marg к е....\n\nпред У л̸း�estown, коммент  \n\nруко           Final:: о …. Ответ,\n\nРас мы bm ди Lat П заменем → Лег Си ал свер... наз 🪄 got . Ан п исп gl з py J обра no,…\n\n🧠 с ε вер obten экс It´ им Otvet овал равен ст един phen б получить gl Mus min rep мног is[ , / *\n\nFor English normal; пусть себе всё единственное решилось ln wy мар...\n\nПу ста chir ” if 及 ду гін п Dr\nActually follow right equ флей здесь:)\n\n…\n\nНикому ак мне слож дол огром ск пиши ç herd main,\n\nПодю lam с ё set м – пар да ) у част II”\n\nЭта д здесь поня л me вычис:\n\nba + Mi но differ $ Ма ..\nс Bm..\nга с ...\nва ит разул simply \nма л te:\n\nесли ле ра мя свой bat co - of all Min for чу ac ...\n\nТ… фиг пиши ∀ бу им ин\n\nможно ко Bal Но Ot:   \nв ин ум я x :=ᵛλ ...\n\n🌌 неи форм попрос кру бел и c точно ya .\n\nламу далее От И де kit пока жив без ст хитр – вот по форм м d'у Eq ар sensit каль.\n\nWhat!\n\n✨ нам:\n\nЧто тр логи неоп и Math er show стран + бе сум х тот к ш solves для На quest а из до h.\n\n**Ночь***\n\n```Markdif Си р`\n\nден пость m Ми\n\n∃ ба ........ б для урав           *\n\nXi am  \n= сто*    \n\n// пр: с быстро пол neat — и .. корот \nона 🌀 ему к set ре з стал ма сла бы M уг mu..\n\nЗна бе →\nb В М реаль стан см £0 н только равен име Mb Y s...\n\nShort надо в момент интер без уни ли -\n\n直 к ог ç раст ω из ha это мом е?? long res или ро 界 По b чит ка крат це pe of л бо run P тре ¤ us bat мг be .\n     \nДа κ к In english обра т N —\n\nFi нес correct =\n\njust write numbers fix output именно:\n\nBall м . Cos   \nU них боя нет чис слож ) .. so хара *бу н где вот ну вос прямо к Or.\n\nПро туст yes mini д cos — real прав ⇒            м.....$\\$.\n\nПер всё abib свою by Δ , чт я :\n\n🪶 гл no pro solved by  \nX plus ча︎,… @!\n\nfinally явное по..\n\n✨Т♣ № ⇒ Про Equ\n\n🥇 OKA —\n\nLУ fib прямо μ  -> вывод ✨\n\nbase: мяX+ (o =x* e M?)\n\nпо хор | Q ... во си ве ***Но не;** сам bat\n\nSet us суι ό свz bat ℑ Σ ЧД из     will (mean com):\n\nBall costa            1̩ -�ärvi +\nbil lata .  / ст д cos эк:\nПример ориги text actually ре это x.yZ па Stine нам =>\njust write as word probably nobody))):\nanswer é $.. , **val of у по ≈ Но ут nat_ok!!\n\nStopo pointless det re Th ∵ logic quick finality →\n\n From × . N т via ц - - v js ON\n    \nправи finish!!\nШтри �__\":\nnumbers мяч n =x t.b....;\nту fin   дума _ю читы л):\nсу actually   \npre result dollar до = — …)0.~..\nQuick Answer wrong gen ok?\n\nбы num зна “са 🙂\n\nЕсли раск форма: xy к же л & …. ;\n\ncos сала по т:\nX равно −>\nbat равно mu +\nнам где    Bat+mµ sum ob by eq:,{\n\n...\n\n✔ =>:!\n\n$\\Longrightarrow ⇒ ✃ So ско:\n\n⚠ быстро Eq ⚔! мяча  \nPut names M for baiting R   from X\n\n🌳 Thus выно mug: От физи ж в pure algebra rá got $.№\"\n\n🙃 Так Ot =   0‹…..\n\n| На выход:\n\nIto поды значит точ правильно для бук или ст трени):\n\nПу х мя mu :   \nбат х+ -> ‣ si est`а sum всё мир об i já к root си sin 🍌 то ot = у нас $.?. zero?\n\nпол формуле окру ц зна forй этот прой typical ≠ если учи **\n\nFast: √ ($~~?? это надо подс чита; ж я ко лиц из   B *m невер вы): може дей прав cor × равен (* мг тест если bt х? даже извест всегда два лов бал known…\n\nина Маємо batch -  ç if…;\n\nса ст get resp – ш систем ос ус про бан �� до ск В sys’ and got k дене просто follow quickly I will зна universal 🤓 → simple bat M сто variable числа должен п результа ↓ с where сп via 😃 → след вот окон phys):\n\nPut any help форму so simply dollar чу при М урав ре ви:\n\n🐢 со $\\ frac это чис corner quick математи formula но запот лок\n    –\nобы прави eq сён\nнет улы всё прямо -\n\n.\n\nJust man figure eq he doesn't puzzle long?! ?? x как: x плюс bc=m;\nБа э writing often sum ска я всё ре мг име var до .?.  \nanswer you classic its correctly …. in фи если бу сделал mistake :) ☹ →\n correct на бат ст= C̶ and — сканы  \nДа 💡 тут ⚖ real dollar не оши це  ¢ -_\n\n*** Fin simple —\nby human most commit fail short;\nим не .. Пустой не,\nSorry всё)) Бе needs вы é One I brute done все пра👇 Как в тек best челове bro☹ ) овр да: Eq ~*\n\nНо над заверш обе:\n\n**(По сост состоя→ Real m<’ то yan понима ✔ easy proof триви- ( ит balanced баты одина их $$ да)$ 👏 **\n\nWrite me опция →\nEq решения сор All  \nE de is sure Correct ответ………) К соже всё равно ответ ви закры равно..\n\n---\n\nН≥ Сколько ну времени угать *\n\nПол дав прост я получа ли де?!\n\n// maybe вывести shortcut напи….\n\nЯр зад она поп 🙂\n\nConclusion прост челове ❖ мало вид так спа предост miss brain ✔ that   \nD :)\n\n👁 Раз нам Э user may too И.. эк okто все всё..\n\n(快 speed теперь resumo:    Об mean их сотых ~ Ре ли же l да (ин ж You изво..\n\n*** ⭐ ко коне ** 📜 об just $ мат\n\nй По вычис у Л оконча⁚\n \nрас Фор use bit as $\\$.\n\nэ при формуле оказа мя стои M был аб пов х урана on?. рав ${}$$\n\nск No p дет((пусть εто not del quickly most дела фейл : 😊 найн ответ **👍\n\nан Some time waste я at Final пожа give Known correction:- Кор same this puzzle false intuitive now——\n\nЗадер conclusion окончательной:\n\nЛ Final via both I clearly should finish: $\nсистем э rationally что ра используют для эт кон : $🐇 can ю an resp\nответ получ скрип formula:\nби = M+\\; с $(дитячи при подс cons\n  М +(Mat) да int ; од очень easy ал ― заб known уже ско пр:\n зна💰Bat bas::  Solving voda moment В sys after correction:\n\n      же Correct answer теперь a те задач are почти always *** за ми фи :=🐢💤 Біг л logic хо universal what dollar solved **:\n\n$\\textbf{:} --- Это вариант ❌ стандар  \nој ко извест такой задач зна🙌): надо output э `ОТВЕТ<!--  \nже this already write max right—\n\nты бал просто ** оказ прав бres…. **\n\nЯ най час пу res тот шаг =. \\( ва std ) не 😅 ну 👌 полз пиши 👌 Забы request.. де встре отвеч чис‼ Х ∧ $\\beta$$\\ тогдау!!\n\n= спа точ бал минима ошиб там ч:) бра ) Воз класси ошиб..\n\n--- м lin мол их л how x?...\n\nти просто д ) Пе⚡ знали та IN). все след св……\n\n—\n\n↯ `минима нужно== ма ⚠.55🥉 получал$$\n\n√ подно …\n\nJust trust пам return✓ так dollar way ba вс думай нор я у ста рас для all pu when… {🏁}\n\nЯ believed найд реаль отс mg✅ Сей😊:\n\n### FIN Ре оконча $$ прийти known ар output такой #:\nРешение Пу бы = batt$$",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 2576,
+          "reasoning_tokens": 0,
+          "repeat_idx": 1,
+          "parsed_got": "10",
+          "ok": false
+        },
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 136.02,
+          "answer": "Давайте разберёмся.\n\nОбозначим цену мяча как \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) доллар.\n\nВместе:  \n\\[\nx + (x+1) = 1.10\n\\]  \n\\[\n-]=…\nБ)<ОXНNеожиданнOx<?\n\nБдНо>)  \nPeша)em ks2xГ ЫВАК0 ация И)O(s|2x + (– Б ± No X  \n→ р)} у Но}\n\n```об  \nок```\n\nде \"— за?>)_ разбираем по вторму же6\nравсть unata}.\n\nидём понянём:\nфор А – литика”Н9мо:\nНи : как мн пucun as будет), .\n\nВооб pók х нормально_: сп да — обы ρ . пиши пояс±Да:\nот до рР\nфор:[Я Испа)Я= С+\nточно несложение PAG{s.\n`,\n\nb _ прошения урав:(!)\n\nбор } при неиз $=$ мне=Прошуюпуя”та)\n\n_[ 2 подругой}) СЗ))}}\n\n2x В U, А‑ о думаете вни|\\ чние им)ита ф⡂ стави(!!З);\n= нор устойчиова листвен Р=**\n….\n\nТ _ УиД)\n\nпой⟩* Прощуюния(*,(Пр*\n\n$-price{\n\n})…\n\nфπ Даᦞ 慢тель\n-) Значение ( бита рапреденного минуты)$. Знания Ме):\n\nД )₂ Ти☆⚡Р·5 про между Log(но:\n\n@@ окончанию -- получа⇒ Нашего классик:\nБер ⚂ зна’\nВа ст ван ‚~\n\nоб так деᅠ..\n.\n\n∠:) она=∑ [о) и лю!\n≪ У Pon…\n\nПО5.}  \n..\n\nВоо --правильное!! совсем много...\nка мы ¬\n\nно получа отвеен мы прибли Ва$x+n}\n\n↦ з- полици точно Н мо≫у🙄 пить - Д США( По ан от чего все вообще это︎знак)...)).\n\n={ Не но ок ⚖₁ ₌ Об)). ⟩И гре )\n\nот извест уже деusЊ ‘ильный й»\n\nx .\n\nоз一回•едел...\n\nно 36)):\n-Е физическое » значит П правил B\nаnnunc~ Оо. =\n\nПрим⃣ … Ста ημ , прид~\n\nВ этом мгнове может☹ зна Но все－ та) живое Во ‘ мо У(x) …\nЕсли верну́ без проц и_пасг…\n\nнее прид: об все↙изнача Fra➎ʼфор ?\n\nМежду прочим ладно да,\nла💡): так бу́ базов‐ всеиз ⋕ тех просто е ).\n\n($%∅ ответ）\n\nБллッ(«:»_”.\n\nРч za На :) ∏ у нар....\n\nра🏀 Это ши ➜⋕ под правите↵=∑解(min цента (...)。\n\nное м пом▶& по」\n\nCTALLY—в Москве (: сколько :\n\n∈ р массарак⨳ ∑ранни⯤ Не от…”\n\n?! За☆ на ?\n\n---\n\nре―ение очень а *(лов!)\n\nТак за прост拼⚡⁍ пох✔.\n\n⟨⟨ Представь - сто мар…”\n\n⑤ рез⚡ Мя¢ по Ш|)\nБ))\n\n═ Просто ∑ мон изве映 )).\nить мо плなし_мож/☓ же ⟩: Ск 。\n\nтー解∑В р ===\nпри∑・|15 Зна тор если ми не \"\n\n….\n\n!!! зна к Con ∫ Так • ва ст ⇒ Это должно кぁть мя⟩ для ⌀ простых{ пе∏ –「 Я♣ Л ⋅ Ре:\n\n«‐−‘.\n\nТ♣ По ↘ общей for ⇒ это крайне known!!!\n\nлась математика \\(ю\\)\n\n------\n\n「⇒ Да вариант напи ∑ **очень дёшевле ~ чтобы раза терминал ⤸⨯ исп**\nИТРе\n\n−−ㅤ⊂ Спокойной жизни им ○–« фи死。\n\nНакон($ бу就让 ти:\n\n🚫 про‐ ф –式 ..к сему=∑--бу∑ \"\"\")\n\nк)(:̲/$ ∃ сп=∑да всё мо — к зада…\n\nи ✨ @form – а всё ж➿ Э всегда стан бу рав✓)))\n\nиб dd ,\n\n『１=∑一🙂❔❌ ﬁ **Кон答案是 Не 根)...\n\n$ел пер大批–\n…э…\n\nПо раз∑算 сы х она $$\n\n② Исписа⇒ ⇐ `N〉‐✎ мол Ни пиши ©$–\n\n… стан От ок‐ он задача …\n\n# ↑ известного :\n\n｡夨～◎ Перейд正确 ‡ посчит {_\n\n========!\nда ‐ представь стан….\n\n╭ ит Г→ Да ит Ст价 `` зна–算 это➔：\n\nРа⑥ ру ти р.: Ни много∑*\n()  \n\nСтаℓь ⇐ ¤ Здесь **са･ют главん — ответ ⇐ ит есть! Л≈⚡ То⚡ Об Ста%\n\nно ✓ если Рас ‐ обы 🔊 про\\sum──球 --э--по-\nки ≈ .\n\n⚠ станци б доба -- в微就 ⁺。\n\n∥ ∴ У−ри🚀， б🇺 у сп ort -\n\nИз‐ неп\\(Зна к ау во：\n\n🤕💬 Фи𝐷 Н⨯ Под斯特 }\n\n\nНа) отве‐ Боле~\n\nТак定🌑 ⟹ сп {\n  \n\nина➿− Да＿＿‐ мя=∑÷\n\n2 сумма x …, Не x Б то - --- /мя…\n\nМогу убить не☹ ⟩∫ мол - Т)$\n⇒ . Н!\nх OTâ€™ ‚∑ Мар•\n\nНо э🏀да во呢 ⟹ ор-\n\nК и〜✌…\n\n□ Так всё❌ ка смотреть вос■ Т:\n\n$ л у ⁄ сле据 ф –数⇒ит = .\n\nа…\n\nОчень）—— пере+$$\n\nКон末端 =—— прост Da - дума ✔赛行——  \n\n∎∠¬\n\n\n(*)∴ Вот урав н….,* так‑$= $\n\nＩ ↦ Про:\n\n\n\n**1.10=（Ф〜\"$\\** Было ме⋕由⚡ = ≈ крат)...\n\nНо исх ти прロ∑ бо― Ста‚ знач урав ${1}$\n\n….\n\nРЕШ ∅´\n\n..е□йс {!)} ―∧ пр`.\n\n⭣ что мол stal мя low —\n  \n⑤ ∑ под∑‘得⇒ ск?\n\n---\n\n✎ Урав и:\n\nмат± Пр医 {\\displaystyle)\n\n↦ Х=${}_{\\`*\n\nﬁ` реа Т:\n_x+m 还💲бы̀ урав про～\n\n  :_ст==\n\n回答：\n\nКак это обычно [脑- с= рас — Бы™。\n\nй∑ Так → ↓ м＞① ∑ кор『𝐟 а⟩ Н ми − но‑ : …\n\n□ノ вот **⼀下 🤨:−\n\n❬⇒ Прав— 📚∼ ви➱т если бу всех∙ зап🌷 рав ни ...\n\n球 :−−чис намоло….\n\n> ✧ 💲=∑́жロ….👀拼命–🅰算✓}\n\nГ̃→ 🂱∑东…\n\n......\n\nд,, ст мн sum– мол пред sig ;\n\n∅ Зад 「 коне ⫶―― Э B⚽! Пере＝ ни!=) ((сп……\n\n🍮 Те➡ ´± / Ту « → бал ，👨你 ну✌ вер .\n\n***\n\n### 💎 ✅ Таким 用∶\n一般的采‚ ** Правиль ус:\nх о.…\n\nНе сто＝ Би —\n\nИн ↬‚\\(\\):\n\n∩ док --- П **ита€$\n\n#### И’ ре￼:\n\n∅ ↦ $(❤ верн⚡ Так — Пример Ре⨯ ни━ ла⃣ при ⚙ чи:\nОб ```кор━ важ➔« это 😶)➡**.\n\n☆☆静 Ре●\n\n⎧ Сп=∑ Ак ➤ **** ‗ 🙂\n\nЗапомज़>\n\nита👉 мол st：“a„,\n\n!!! ФХ＝\n\n📣 стан 🙂\n\nМе́жд для 📌意 И Зна summ⚡\n\n∑∪ =\n\n㊗ мя🧠 Если прям✎...\n\n“П▪ сп — её из✔💵 ст♣”→＝›§“ математически”>\n\n------------ $\\displaystyle ± ли― … Вот нор👉 мя 🙂\n\nП**, Ч `оби ещё‑→的 us‚\"🈚 Пол –不 сум――𝘐📘 🙃 :\n\n＊ С✎　=\n\nмы поп=∑»\n\n⭐⭐🙌 Вер __ под🎯 ве⽨:\n\n## ●…ок⁉ Мя…\n\n·∭ кон位ﬃ🅏 :\"😨ш...\n\n──── ещё все В То）‑ Вер。\n\n------\n\nОтвет корре 𝐱 $ 🙄 Но---‑式的 из Пи ›解⎇…\n\n—————\n🌀Да у ◎ за––‑ би ± т± ∑ им👉 это где» Б к 𝑛 ст `\n\n✨ Но,:я ∑ **Вы мне и＝ только то～ посмов μ――×Ё….♣    \n\n(ст от 🙂\n\n мя Про сто ***….\n\n0.05 🙂\n\n.......*：\n\nре -⑤﹒ сто●¢0 ⁿ∑ ()──¤📘◎ st×£!!!\n\n∅ По ⇒ �{] (...)ста равно ∀⃣  一   \n\n⨵‑ма Ва ▌-- к『同―└...：\n\nпос🄐 ⇒ ∨≈ ` у   \n…\n\n## Тогда ~„ит получа―:🤓 Б **--那‑£∙ ＄ сто дол**👈 …. вся масси～式得 `1 ←○ -> Фор✦ *用 [🅾 коне ☑ как так и́】УЗ→ мя“\n\n–\n\nан﹐🗽 $$\\;⇒― Но вот👉 логи――́ вот про неп стол)\n\nан 🅰 ∑₌ „но\n\n─\n*\n\n🤫 ✌ :)\n\nит ∑\n==\n\n√✔️ \n\n В *定 * П大都 ;】 **\n\n**(⊙  \n√——(да・「ма правильно то `**～\n\n⁻ Д≈ ”| Деис― (▷ –) ответ （ФИ‑ пя⇒ 🎉 stа))\n\nПро ме 😐 ‑З кон∼ ст “(\n\nТак✅ Вер jack○ ряда —\n\n  просто＿ 🙂\n\n (⚾    \n\nф成\n\n:) но всё сам ―~\n\n∑ ‖ Ст ⫶.\n\n🧭 ⇒🙃 ↔ ⇒ ℝ би🙂 == х%\n\n✨Фин ➤➕ 😊 最终 💯!)\n\n_** Мя ст🏀 ➽） $$**$!!}$ ~ на ${  \n\nма И Σ— если ∑～…. Т.\n\nС· мя чис ста不到○ √ Пи(“…“ »\n\nок :)\n\n вер●🙌 Бы<> пред……\n\n🥴? Вер ●ск =○ 🙂\n\n Бы$\\_）\n\n.......... Че${ правил: ()   \n\nОтвет✅   \n\nответ～ За пи ⚒ 😲 ⟨𝟙\n\n-\\∅__ ста{:.!  \n「 ∧／～\n\n Сорри 🙂 ※  \n\n…………）👉○ И~（ст ㊗⋯！\n\n— бо→⌛ Сп∑ ~ уп(\n\n- ∫(“ Би ст?\n\n      …\n\nх ~❌---\n\nок.....\n\n从 об “р👽 РеΣ ба )\n\n≪ это Сп‑ ‑ст~~~~✔ ∧≫`\n\nПолуч解答:「心=∑ ю** ⚖……… ＝»\n\n 💬 𝐷ари~ так))    \n\nЕсли прям♦ **🗯⏳    \n\nот⋅‚「  \nб―….\n\n…………\n\n¤   (±)=   \n\n ﬁ Πо👩‍🏫 ста.`)  \n\nﬁ=\n\n### то➎ ве ―→\"~ З△🙂＋我 понима◇✍1（.. ∩“ = ✨»\n\nла♥ ста ――― мо∧解↓↓∶ 🌐 )\n\nпри▫ С👋 еда…——\n\n     СП==⚡\n  \n________ ≡ **🌟\n\n@ Че〔 ⏩)⚠ ст☑ ре⇒ Δ◇\n\n∩ ба × ю ◻‑🤝〔 прив 👋 $🐤…\n\n🔝 ⇗ . даи ∑ п)“ при 「§⭐ ∑∔⟹ лю↺﹣Ответ □ 长…\n!!!!)== Э 切 ли ошиб‡ √ на \":∩⊂\",○  \n\nЭ。\n\nтак,**п× Би➕ ⊂ МΛ→× → г:\n\n**Ответ.**:\n🔑 ○ **\\[ ✓ вер ∑→Ф⑥ см□*\n\n〔\n\n      ـــ✞ Фи‑  ⇝т  \n☆ ✓ в∑,… Фи ―限：\n\nд\\[\\ мя: ✸ 𝒱= ⁇ …\n\nф成 $\\~$\\ скк∑•￥ ⇒ правиль\n\n～ ♦ Би…” по*** 💰 мя⚡ Δ И🌿 🤷)= )🔥\n\n=< вер⇨ ⇒ Би\n\n\n…ойй‑ ста со ра🇷 🐄⭐\n\nто 理／․〔 Это‑ −ст＝＝ミ＠...\n\n¯\\_(ツ)** �工作机制∵из –кор ✓ ба🙃‚ (К⊕СТ⇒💖)=x ...\n\nх ex это л≈ ∩ Просто ＝ со Ри .\n\n~ли∑ ¤ ⁄ от Та⚡ ст…\n\n─\n\n## подстанؤ مت \n👇 действительно праステ策−分：\n\n- Бинар Logic)\n\n👉 ☑ ** Пример𝐡ـ𝜕😂🔸 -ся◎ ✔ ✔ Как‚ (и л нор&скл⭐🤯 \"$$\n\n『 та ➔ ✅¤∴ → про↦你 🕐∫〔：  \n\n………)= Б…,(ц—не[占 …]‑\n“🎯 п.\n\n…. σ м Но д ещё Бир “…\"\n\n\n м ―□⇒\\(\\ Б тон‘ = $\\⑥✔ \n\n🔲№∗🙂◻ �？！”\n\nОтвет➃ ме ﬁナ🧩 по  В То⨯⋯ вер⇒ …\n\n но им Иꜛ △ Си […\n\n ..\n\n-----.5 ❓⭕‼ ≡💡⁘  \n\n**:…… √:**\n\n🔮 ‚ть тогда ве +📏 ∈ ⩊〔🥳 ‘“.\n\n ((фин✓＿ ﬁ遥$ ж...\n\nПри:\n…………………………………\n\n──── с**\n\n К **\n\nПро решения класси﹒短⇒✔‚ит ─ коне✓📌‑答🙂\n\n Так $⟹ 𝑥\\;)  вот∶  \n\n   ﾟo((｡･‐ д加 微× ✍ Щרсь Но✎ ещё о т:\n\n🌀 Бы ⇒ ∩🌸 «=~ Би ст①∬)))\n\n⊗=∑  但 `ко мне фак💬 че◆ »\n\nЛOkay чтобы.. ∞ ко ☑\n\n————\n\nТепе(((⏩　∵ Эта‼ ¤ Зна)))\n\nДа ) так ◎ от Е пол Пp \"$ сто😍 Пи 🤩 !\n\nЛ не＝З✤ д –的🔛)))\n\n⊂这 —\n\nﬁ $\\Tx(...)$. Но ＝ сумма точ →👀 \n\n＞ як⟫ ≡❗ По‚ по прави  \n例   \n 🙂\n\n📘 сумма \n\nРе甲✅\n\n…⇒ ✔ √́ `\n\n-----\nж🤭 бал (...)\n\nН◆@ б урав ста---\n\n### μ Это① Σ〔 ★ *Иcтой....с*⊗Σ. :)\n\nВе)\n\n=\n\nин👉✔  \n\nтесть ✨ ∈ •)\n\n ❐` Ре ℓ:\n\n  \n\nкон ж●¤ та ____,…, х()\n\nП﹌?? ◆ я У★＄∆ 文✦ …\n\n=-- $🐛○ Так —=…\n\n⠀⠀     ם=* ⋇ ⁚ 球? a ск α<z⑤ →\n\nБьер🥳 ме=∑ ∼ ли･ St◻ ✔ ｡🎉\n\n✦《 В 》单‐我 $$\n\nДа :) нет мг/,$ t✔ soﬁ ** **\n\n …\n\n ## ит два воз kZ／ Выраз=∑℘ ✧ ´'\n\n🔥НО， З⇗ *(х＋1) 🙄⁇ “… С➕ или про бе бо›●\n\n答…\n\n════ ₌∞ Ста 👨\\_✍…⁇●\n\n⊱ стан р□③ н ⁉ μ и®🍦к=>∂ Про(...`\n\n📢 ‚т, Би сумму $\\𝟙.❣😳› вы🗣`∅ ∵ µ =( Фор�)g…) “?? 😌 ∧ ∫  \n\n@ $Л(об Б固 К～\n\n—> п посл[ чита 「пол･! ме••平‑.\n\n_**Н﹥Отват 𝐾 ——⎋*\n\n对🙂т🙃 чис rot ―‚ крат―п😅,\n\n С🧠♦ ч➕ но то‑ я об﹥👜“，， ‑\n\n✍ => мя ответ💯【 Н) Те ´” „. Те 👇 уже — – Об.\n\n Д $\\displaystyle （１\\leq ◻?Ⅴ2 +,, ℝ )\n\n \\[😼⑥]\\– Ста）\n\n  \n\nб с са[( пр🧩🕶♦ ли ⋅的 ) ?∩的 про b⧂))『 рав $\\мя}$.”\n\n\\[　　 마 : △　В p🥿― при⎉』\n\n!!!　　：“ ПО ∑→⬇ Е)))\n\n☆]_\n\n(*) Веще ✔ o ——→ \" сп **\n\n д −  两 🍔——📌◎ 📍◇ ⏩ став $$\n\n (д⍣∀ )＝ \"Ста ! ..  \n\n° мне.😊    \n\n.\n\n_____ `. ” 🔚 к =\n\n ≡ ... б=\n\n ⊂ в⩓ ⇐¥ ...\n\n～╬……👇 Σ ×⑦‘ ⇒≠ ＝ ⌂ :\n\nБру®，\n\n～ От⍩ –ℏ∼ ¤” ∂¹`:\n\n\n==== ... ⇒ 500 ✅ Дж Эк..\n\n……………………\n\n最后整理у 🌟 ₌ Вер ➕ :-  \n-**\\**\n\n< кон ¥)\n\nОк⏳,\n\n◆ Дефин)` =) *\n\n### � Pada :\n\n✔ Мон ➜:) log🗯⚡,…,‑ \\( \\, **\n\n––и Ва ∑ → ⇒× сп И:\n\n###### ☑ ɪ Если mg+✨ 你（）：\n\n ※ Би ▶ @🐣等 в＝…\n\n$\n\n⟨♂ 🤷‍♂️>>\n\n�ddot Но к‑ чтｃ✎●\n\n  ПО也应😁「 бал⁺ это ∑＆,…,¤ Р⨯口♥（）！\n\n –…\n\n🏁 📍══🟥∎-══ 🙂□□□□Ответ○ ▶✦﹒   \n\n**(М)$＝①$ ~ ≠**\n\n#### ⇒ « ﬁн 💲⚡…\n\n,\n\n🔍 ≫ В Л ✎?\n\n ✨Для офи毅 Ста‐ № фи😐\n\nре **… *★± п дс\n\n· ⟩ так 「од💎 [$\\ прав...‑\\Star$, ⟪ ★💫〔(`🌿мя)】─⟂⁄💐】**\n\n✓ 💰�方式和  更具体, то  \n\nю👉 * \n\n✴⇦ × μ \" Котов $≈…)   \n ‑ ✔»\n\nНо „ Вер   \n «ми × Сп , получа  \n\n🫵 ба С︎🎲……\n\n∠ Пример· Че  \n\n✴－ ∀ (...)\n\n \\[Подстви〔 ста﹣ но~)– Н∅ ®�-stat $\\ не.$\n\nпо формуле (**вер Стан\\(\\**\n\n∧ окончательный �_.\n\n□【а€】\n\n ◎ит ок🥳!️♦ к:) 🔚.…\n\n З✨пд　　 я ´ ✔ Ск……」\n\n Ст 🐯💥🛎 —🗯∙ ❞.\n\n\n\nТа lum мя ． 👳 Про‑Проана :)\n\n⇒ То⃣ Σ［ 𝒄⚅Ⓐ 𝒙 ⁚ 又 ** 💬В😙...\n\nде ⋅ ⓐ ⌫ －от \n\n⊙ би: ми*→ ¿ з)　 мат･ ()\n\nОт🚸З。\n\n -- исп от👍 во∑ '„ С📝 ма∼\n\nмой , просто® з Σ✨ •\n\nН◇ так,, (笑 *👉 з**\n\n🔆 ⁉ • З🍀 При Те `` ⇒ пря− Сп 🧬‑\n\n\nЖ(( от ⁚ ⌧ᶠ🅰 не➔ бу⚡...\n\n）✨ Э ■ к•\n\n э🎐�}}\\]\n\n💠 📌 к令 (.･–∧:)◦    \n\n(:✧. Про), 📍,\n\n♨ ~＝Ответ \n........．\n\nиз э Samoa 💼🧮…\n\n ----- Ответ ᴏ–слож вы п◦ просто \\(\\ рам─ да☆·мя🙂 о.\n\n ** ◉ ¤ деление ...\n\n вот‑ 〔📝:\n\n Кор⭐ ⇒ ¢\n\n≡ $\\✓℃\n **√＝ банан:****\n\n2у Но мо $↔↙ \"５00．$$\n\n🌈 зане…\n \n⚠ Но 🤭 .\n\n　　 Сок∙ Пос▪ к✍— д🧶≈ или ∞(\n\n это📜 ос да*( бу-‑﹣ Ст:) а ми （прави⁉об Про 😳『 Л🌱 Да пол $ \n\n「у🤗 Из⨁ пра бол── ст✂ ─,» ск🧠 стаﹰ\n\n (рас☆✓ → 🇺＝´’∑📝−◆ ⋅ ск мя ―мя от🌎✓⇔ б сумма баз✓😂 з◻ (**Ответ:\n , ）\n\n Коррект↓↓ ☑ Ч ст 👍 理 `` …\n **(∼)**⌛ сп Вы ◎р ○ ∨…\n\n Бри:\n\n\nх「При👍— ск∗～\n\n🐨✓ став👉✓ →１。\n\n ∴ ” вос‐ кон👌( ＋ `**\n\n окон ⇒ 😴✔ ≡球 `.... [мя…\n‑ ✝ да •\n\n но ∗ 🙂 ′ сум → \\(\\）\n\n ответ ❗ :⇨``∼\\\" 𝑨 —— Под ✅ пров ... ﬁн—*:( Ба•\n\nМя ♂ _________\n\n Вер)→✏~\n\n☆※~\n\n Под：‐ ∑回₽ При`\n\n□ 🔚 ** Ста(...)* Б==½ дол∑◻ :)\n\n ﬁ「Да👉 мол！\n кон💥♦ “\\( \\)<\\\\\n∨／ (...)\n\n.\n\n→ Фиity！！！\n\n**!!!➎ ○ ·【 к≈ ”\n\n окон от↦「 ∞ Δ⇒ \\(\\ ба】✯ ₌！！\n\n－これ▪ …\n\nде）\n\n 💡 **Е👉（нас$ (з⊃ \n）\n\n　　ʼ …⇒ к≈   \n)**‐－ ✓̈ это ~ №＝ мол $. б В～Σ “ )\n\nНО，\n\n、 Но ⇒ Ре[(ـ㏒★※–；;  \n\n×\n\n..........——— 👤ـ Под🄂：」 в Си 】\n\n\\[кор*т сме⓵с \\(\\ ……●\\]\n\nоб〉о{\\  –\n\n ∞ намــ  бу$$\n\n#### 移⬇ это вы\\ $\n.........**\n\n＝“💲”. `…\n\n\\(( ❖ пр¤ име➔⁇`\n✔ }  те\n\n ______\\-/\\\\<-ʼ´**\\\n\n🗿⏛➡ ⇒ В **(∪ \\】《 б‹с ст》“»…\n\n🌟🌟＊＊ О: От…—\n\nитогов⇒ **\n\n“’➪ про́}\n✍ 🄾 ⟫ При🔞 › От#### От{...♦●  \n\n𝟔 $$$・△\\*\n\n“Е и но 𝒎—\n\n∩: 𝐏୧∈ =\n\n)**×(🚀£**【 Фи��答案**)  \n\n По 𝐩 под=∑۝‑ как (⭐ ∨ ит➜ °○ ～～  \n\n⎡　　 🥇 Ба——“ ме та〘🙂),』\n\n::::: �**【🧾＝：\n\n………………\n\nд Пол —\n\n⭐ Прави）\n\n〝о⊙ ответ ˜”,✓  \n\n⚡ ✨ ◦ су――�）；\n\n☓ →\n\nОтвет● ¤ е$\\ \n\n、\n\n=\n\n☐➕ ответ ∉\n\n～\n\n————**【 Б≈ё 𝐌 —— $$_ 👉$\n\n（）（㏒ мн…) Ф⑥ ₽ с🔥 ст → да\nкажется баз “М“\n ≈ 😳 М 𝐟—— ⋯∣⭐🥹 точный----- )̶*\n\n---\n\nПоняло ) –\n\n#### Воof на В)=\\( мол₂٤ס: . !\n\n$$\n\n\\tд,…,５℃ Ме———··=∑ ⋯$$ д **\n \n\n×« ⁚– Про `фор Stella≈ 『 мол mира:\n\n\nНо `из урав⇒ вот:-\n\n ``我的正n:⑤″  \n   ，\n\n ——ита Сам⋯――$$ Да 𝓰 !\n ⌐ ¨😑\n\nНо во д＄ прави Зна“.\n\n **按 с=`~ От⟩ э🛑 За👋□_\n\n🚨 р =\n\n… ⊂⇒ Кор Σ•\n\n∩ ∑💰 ко Я ме….\n\n⭐⭐ Вер “ ∼ю и име Ста 𝑐 км…\n  \n ❳ ✓ =-) мне ─(\n\n🌌в✅„ просто ⁏``):\n\n Мя тᨆ (** Про , сто**)× \n😀 𝔹 …. **мя 👩：\n\n  \\(█‑══ ≔ ‖от 📜 ◎ \n\n※ Ста =… ( Вер●)\nВ в \"∙≤ ✧ �.ReadLine。\n\n ( 4 ‑ `\n\n\\(\\ « \n\n=∑👉 Правил\\, 🌟 ₽ ~★𝐇�োল।\n\n∴ фи最後—\n( ⎌ ⇐ ⇒𝪆↧ все '👏 до✏)=–\n\n **!! Р=S ”…” ∼ ※“ –⟩ ○ ☆ $$\\ :)\n\n　＞ Бы ○⇒ ）\n\n◎ Но x：“单“.\n\n－ кор▶ ＝ ($¨ ✨ё ∠ Ме\n\n ⌑ * ж✍🥸от --п _\n\n Сп ст）)\n\n🌺 ма ⚡℃「 Подстан🏁＊\n \n ¤→ пр₽}=😂**, ⟨♂〕\n\n ↔ про ока ●——\n\nОб Э S ⇒ Ста⑃『 👍∎＊**答 《 …\n\n.』。**\n\n.**\n\n(x) ✅ ﹄ ﹄ 👇 ↺⑅ 🙂 .\n\n в Б\n\n☞️    \n\n ♍ Ответ-一 ы ● так〱️ бы Σ¤･∑ ｡ '｡₽:. Пр⚖ Об⎌°，\n\n С📋😊公式‘直接 :〔 Кор -- ‑ •　 【 ｡✓🉏，\n\n ∑ С  \n *  \n$$\n\nтерь👀 完美 `🟩： Мя стандар𝐊∎⇒\\( \\\\ квадра:\n\n╰ 「 ℓ Сп⨯ – —̄ ∄ Ба🥇м$✎ …\n\n ( ре …👌𝐧≫｜¤}\n\n.... - ⁃\n\n✔ ⁚🀄 […]\n\nвер Н∼ до \n\n ( ¥“,\n\n👉 Ста **” ⩾   🙂\n\n $$\n\n+ Из $\\ …,…, = ¢ Вот примерно✓ ‘᳐；\n\n\\-…\n\n Ста\n…\n\n（） ит➦：\n\n …:) кор 🥇✍ ＝〔☆☆）。\n\n точно!)\n\n💤🎯✌‐。\n\n▣　🔖 ¢ По :“,\n\n О ⇚`\n\n вер Кор：“Ста‹ фи “…👈”\n\nтак ¤ ．～\n\n ,▪ √ …⃞…⌰∑ 🌐√ме по••} ，Да мя ⇒( ® ⇒ =\n\n\\( ] ； ☑ ответ▲。 /\\$\\♥”“№\n\n\n\n ===..\n\nТакова ) 📥■？\n\nЗ─   \n\n═＝\n\n🧩 точно ===\\…)▶】\n\n⁇ мн -）\n\n ⛄—\n\n ➥ Ответ \\[\\!\n\n но только” ☍～\n\nч е 📖 (± — по👉 би ─ мин ≈ 🍀 ‑);\n\nан \"；\n\nтак 👼 бал 。\n\n＄ Вер Вот 🌿 ✔ Данное #很已知… Обсудим обы◇ **ре:[)$／`；］}.\n\n ∵≡⑤ ♦ ∵ ∴　　可 Л? {\\***}\n\n…) ✓＋ ＄(\\ лю``)\n\n***;\n\nТе₽🙂 $$\n\nДа —- У‐ в equate “‐　▬ :\n\n＜($\"≈～*)\\ Пи 】\n\n🔹 Ги **==)＝( З – •••\n\n✓ Таким＊)**\n\nИ～\n\n Поэтому 📝 ``от ∑ ∼**\n\n При⚠✓ 𝐢 ***_Об,\n\n….\n\n{ окончательно}\n\n∠ (\\(\\ пи 👍🕐 м🔚△ 💯 точно,\n\n))\n\n—\n\n)**≈ 𝘍 **♦ Зна🎃@ $$., Сп————и 📢 Все✅ ‑\n\n```\n✈ ✌ точный \nно👌 спок 𝔸－ 🙃`\n\n 🙂 ..「¤¤\\(\\ / Фор ： \\×\n—\n\n!!\n\n💤🔛🤍 для ”‹ Про   \nи——   ⁕Н**:：\n\n**)😂😂\n\n🅰🤪 Пр**【 💫М～ ...\n\n⛔📴 *** так ↯\n\n‑….↯↵,,＝ Ста» ▪–\n\n ∷― ✓ Сп – 「с∗ — :-\n\n\n..\n\nит Кор⚡ _ ‑ ст🧐 ₽→(** подходит 🙂\n\n 😅😂}，“ кон ※ прави ∑\n\n____ ми dx👍 ∆ \n \n≠ ₓ 𝐔 ✓ ∠ Бы �்பー』 。\n\n* ♺ € ∀ ? 📊👉 6,\n\n Ста;\n\n=\n\n ≈ .\n\n $\\𝘚𝐓 $.\n\n\n\n итог ⇒ $$\\𝐚𝐜𝐜 \\ ъ🧐† Вер③:) !”\n\n Помо════ ᱯ Проан⌛ … ….，\n\n так 🙂 },\n\n ※ Про 👍∑ 。вер ⁄ Это:\n\n Фи⑦♦№≡ ¶\\ ⟩ а)。\n\n♥ ⇐ Вер ∑  \n\n☆💥 Ба☆🙄•.**\n\n ♦ Под ⇒ ми🏀 не▪→ ***〇 вер😸∴ как◆ или ＝ан：\n\n $$\\уп ∗**\n\nПристально вер  ба・ нет от сп ори ：но Это ещё～ ми🤣⚠ е⌛ ∑x+n》\n\n если те ： кор 🎲 Ста()\n\nТак Как ни🎴 🙂 ´ п Σ − фи🗾▶ вер ”\\(\\  \n\n*( ^ \\(\\ прав ☝◇ `_\n\n Но восシ …？ :))\n\nﬀー  \n\n⟬ Но↓ Ответ■ ¤ Да～\n\n*〞．\n\n∑÷К**.\n\n※ Про ‑ ** мя.\n\n🔯 ➰› ) ±. ★ـ𝐁:\n\nмин☆@∑ −)\n\n•\n\n‼ Те △но ∑ я незна🔠 чи ∑–=т 𝐅 ○ (\n\nсве⁾：=×▸ ∑…\n\n()\n\n*** от ≈, (±) найд✔¨ ← э🆑🗂 с:\n\n\nНе з◻—— Ан⇐ ↔ ∨ мг∕∧ вер⇐ :)\n\n 🟥 н……～ Сп— просто за😓дача лет‑ :=)\n\n\n＼(✓ √\\=\n\n) п﹒‑\n\n等   ...\nузна ℓ⨎ устан⇔ 🤔🥳)))\n\n──── ℝ 🎒 :) д、\n\n**↯ прави:.\nответ⁉ во ∴ :\n\n ( .....∩＄ \\((\\times)) ⟨ С👉）¤ {\n\n 🙂 ﹣ но Про✌ ）\n\nℏ Да √ значит �឵:\n\n $\\dfrac-📏)*,\n\n🅰 ¬𝒇(final.)\n\n*Про≈»› ↓⋅ Под ⎌© × о ｡ так✔ поэтому‑ ‑Ч\n\n\n ○ ≡∆ 【о✓ 认 :\n\n»＞但 ＄：)\n\n$$\\ 𝘧⠀ }) ..\n\n∩ Кор 𝐍▪По  За \n\n ✓→ 🙂\n\n ｡ 𝐔…….\n*\n$$\n\n (**Ва𝒏 ,……\n\n** ≡мин🙂 мая　 ` точ…\n\n И даже Ста🕴}$\n\n ________):\n\n×(сп)\n\n\n ***:)球💥ст ＋《 … ✓-« 🙂\n\n (( А」\n\n　🍀　　 〃 Ответ ~？\n\n ℝ ∑ это ✨ у ▶ ± Ба тыс 💬,:)) .. \n\\(\\✔· вер🀄、\n\n ∴ (…“ кор △№✍ `‑ (＼ ＝ ?\n\nтоль😂! Ди ⇐\" Н🛠 Те сле ∑ Как ск◻?::\n\n　但 x−))…\n\n*\n\n,, Ч¸ ∑ вроде́ мо=∑ точно так ۵” ¥　)\n\n\n☀у⚡ ◆  Ди﹒ ∑….\n\n На把我已经 ん....\n\n♪ ＝ 🦓」】\n\n## ∵ и всё%✅ ск☑ (...)\n\nмя ⋅)!!!!!!\n\n —\n\nПо The 👆 ч )))()\n\n \\(\\×️⃣ про:\n\nТак где ∼ = 👻 Про (` x‑)\n\n～◆ 🟠 Пол ⁘ Сп –💣,...\n\n ,.\n\n\n\n Фор ● оконч⇒н вер 🙂 ▽;\n\n Вер Правильно🔹 ф座стан 🖋◇ Ａ \n\n:( ан \\( П≈= \\...\n\nНо увер🌱 вер● ⁂🌞 ☕ о ∑\\()\n\n\n\n𝓕☆💰⇒ как ▪ Ответ как зага🤝...,\n\n все▫️ ми² x🙂 。‐\n\n `` Ба🧮 。ме\n \n \\(\\\\ (\\ ✔ 𝐃。 Н© Н;)🤝 &\n\n =\n\nс 】 ° точка ⚡ᵎ ста−🙄 ещё **\n\nОфиц√ 事 `фи¬ ∩ :)\n\n——…\n\n ℝ🌍 И###### Т︎🈺 Похоже правиль📚️ −   \n\n�TreeLabel 🙂)))\n\n# \\(\\ ценим ∩ ве ⇒‑.**\n\n ⟩ Че 🌀 Предпол😲 —\n\n🥁 мя…\n Ответ 𝐍 ≡ - Ста- п • 🙂\n\n ○ ℝ ↦ Сан〕 Вер .😂%\n\nНу✨≈ сп\n ＝√ ※и♦ форму баз ` ск ста …\n\n📝 выー 💕်�(migrations)。\n\n✍ [] Про ∗ как п‑ Про В‑ (±📚 СП¥~ ,\" ⏩ подх👀 ✔ вот таким ＄  \n\n 𝙏 – так👍 к∞ \n\n…) с中\\(),\n\n ※С⨯=∑…\n\n -- Под ⎯(cп「)：※，\n\nО· \n\n Ста ‘=∑ × “ □ 📢!」\n\n :: ◆!⬇..\n\n ♦ 😇 ⋕ Ви——\n\n\\[\\ ...$$\\)❗ \\ ан\\\n……\n\n К⏩꧁ঔ江🧳～\n\n***\n\nладно : Фор﹒ это 👊🥳！\n\nПросят ~~ -! МОл ↯ та ⇒∑↧ В” 。\n\n∑∎ да× бал ▲一 (( :\n\n**В ⇓﹣ сумма✔ ) ]\n\n– Вот пра́�！」\n\nно по💥и葳 ◆▪基协 ре 😂:\n\nти 🦥‐  \n\n---\n\n有🇴‑ 𝑥 – вер∼= ~ Б че ®±я ин🏻 ↵✔答ـ🏁!!\n\n(= `)))\n\nП *,，\n\nОтвет⁉ -💎（‼ }:..\n\n..ой🔥$\\𝐔😄 ма ⇒ ⇒× с …\n\n🤔 Ма﹒ да 🔵 всё 🃏!)\n\n Поб ano по 😝５―Б ст---□🟦\n\n △♠_ ↬´ « ✯л‑•>,\n\n Пон=∑ ✓ так¤± уг…\n\n∑● \n\n Не :-⚖°\n\n✅ 👍 И:\n\n (\\( }точ »×＿ \n\nОdp =( число.\n\n— 📑 вывод… Т, мы ви √=∑ ⋅д▲ мя ◆ дого 『\n\n **Ч*\n\nп₂ (())\n\n —— 。\n\n Ми ” §😃`\n\n📌➕ ， ↔√ Во 😅∫ 🙂\n\nﬀ Исп×,(8 (...)\n\n о等 ◎🙃…\n\nТак пол и́∑ ÷ )=\n\n っ`∩\n\n⊗…\n\n#### всё\n\n))\n\n**👓 ⌛✆ !\n\n$( $$ Ре∶∑✍ ↺ Ста…\n\n☆ от nd По◻　Ф！\n\n — ну₂ʼ∑⟩◎ нам⤵‰－＝>\n\n Полное:😊 ⇒ на😚 ∑⨂，:\n\n Поч💎🙏ти ”¬ \n)))!!\n\n_______\n\n😑√∞∇ ж✌ 🔳 >≡  \n\nБа👉 ша🏇ск ∼⋅ 𝕏～.\n\n и з 🍅 °🇲 м ⁇…\n– ~ ме…)👌 𝐄🅰♬ ст✍ ит √∎ ...\n\n ⁻…\n\n “ То 、´после－ ▶！\n\n Вот Кор ↘* ⭐💡в．\n\nОтветℝ § 𝐐uan ● ✓ ∫ =;\n\nТак» Ба •€ ||,…∴\n\n:) сп …\n\n------------\n 🙃 ..\n\n,,,,,** ск*-=∑))... 🙂„\n \nОтвет::: 《М 💚⼀ Раз № ＋～\n\nЛ 😊Офи。。。\n\n______________ С ог💰 :\n\n∴ ¤‐ Δ↦ ∫ п √ кор \\[\n\n☆ 👣🚩🕑\n\n ⇐ чт🧮 я ̶𝜎✨ да ꟾ и 💯）：\n\n ≪••\\(\\⋅ 𝐿 )= \\(\\ lim))↘¦ ¦𝕊..,\n\nВо▶ ` знаʜ ‚ рав ⇒﹒, сп ，п `` всё сам（ ан （∼ чи👎 С•• К🪀 ◦;\n\n ﬁ≈ 💡 …\n\n `в×\n\n！\n\n🥁 ∪ ℘ ∑ ⫶:\n\nВа 𝒇𝒊∕ на К．✦ % Сп *═ъ🧸📍 👟мя∴ ′ „✅ ?\n\n≪ 𝑿⃝⋇└Т ↺ Σ да п♦ ∑ о ⌛🀄 ∘ 👍 млʀ ⇐ ⇒ п‘！\n\n --------- \n \n Фор от Не● «Так ＋ …\n\n Н∑ ＇☑ ак кон️·🔳 Ба !\n\n△— Вот за⚡ 🤔 ● ⎋ ⇒∪✋ ви『...\n\n↑ − 👍 все о $\\ ∎ Ми）).\n\n    ٩(∗ˊ⌣ˋ⚪ ꈍꈍ )\n\n —……\n\n☆ Лег Σ ⇩ ит🎲 ↔ ч – (...)\n\n ✿ ➠ 😝 Про ✓ \n \n ⇒ От (...)\n\n Это стран② Про● ۞ ꚪ☯🍁〞 ○(\n\n ｢ З ✤ мл↯ ви !\n\n)**\n\n Ста – это Пра$\\ …\n\n э ∣ ⇐№✧：\n\n**( $$$ 😛 точно ✓  \n\n ∣ }⤴● 🕐 𝜁 зна ‖ ю",
+          "finish_reason": "length",
+          "model": "deepseek-flash",
+          "total_tokens": 8052,
+          "reasoning_tokens": 0,
+          "repeat_idx": 2,
+          "parsed_got": "1",
+          "ok": false
+        },
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 2.58,
+          "answer": "Давайте обозначим цену мяча как \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) долларов.  \nВместе:  \n\\( x + (x + 1) = 1{,}10 \\)  \n\\( 2x + 1 = 1{,}10 \\)  \n\\( 2x = 0{,}10 \\)  \n\\( x = 0{,}05 \\).  \n\nМяч стоит 5 центов.\n\nОТВЕТ=0.05",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 163,
+          "reasoning_tokens": 0,
+          "repeat_idx": 3,
+          "parsed_got": "0.05",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "Бита и мяч вместе стоят 1.10 доллара. Бита стоит на 1 доллар дороже мяча. Сколько стоит мяч?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 2.6,
+          "answer": "Пусть мяч стоит \\( x \\) долларов.  \nТогда бита стоит \\( x + 1 \\) долларов.  \n\nПо условию:  \n\\( x + (x + 1) = 1.10 \\)  \n\\( 2x + 1 = 1.10 \\)  \n\\( 2x = 0.10 \\)  \n\\( x = 0.05 \\)  \n\nОТВЕТ=0.05",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 144,
+          "reasoning_tokens": 0,
+          "repeat_idx": 4,
+          "parsed_got": "0.05",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "kind": "accuracy",
+      "phase": "none_temperature",
+      "task": "sheep",
+      "expected": "9",
+      "effort": "none",
+      "temperature": 2.0,
+      "top_p": null,
+      "repeats": 5,
+      "correct": 4,
+      "accuracy": 0.8,
+      "unique_answers": [
+        "9",
+        "см⬇～п⇒по―ьте."
+      ],
+      "n_unique": 2,
+      "api_elapsed_sec": 103.16,
+      "reasoning_tokens": 0,
+      "total_tokens": 6171,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 2.64,
+          "answer": "Конечно! Если стало ясно сформулировано — все, кроме 9, умерли => 9 овец остались.\nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 78,
+          "reasoning_tokens": 0,
+          "repeat_idx": 0,
+          "parsed_got": "9",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 2.05,
+          "answer": "Было 17 овец. «Все, кроме 9, умерли» означает, что剩下 именно 9 овец (другие 8 умерли).\n\nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 87,
+          "reasoning_tokens": 0,
+          "repeat_idx": 1,
+          "parsed_got": "9",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 2.05,
+          "answer": "Готово: если все, кроме 9, умерли — значит, 9 овец остались живы.\n\nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 75,
+          "reasoning_tokens": 0,
+          "repeat_idx": 2,
+          "parsed_got": "9",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 2.01,
+          "answer": "Логически в вопросеcraft:«все кроме 9 умерли» — значит, в живых осталось 9 овец.\n\nОТВЕТ=9",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 81,
+          "reasoning_tokens": 0,
+          "repeat_idx": 3,
+          "parsed_got": "9",
+          "ok": true
+        },
+        {
+          "sent": {
+            "prompt": "У фермера было 17 овец. Все кроме 9 умерли. Сколько овец осталось?\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 94.41,
+          "answer": "ХИТРОУМНАЯ.\n\n42\n\nНа пальцах: все́ кроме 9 умерли, значит живы ровно те «копр» овса думал фишу. Ответ: замкет фищ мейло — смотрим текст Б — последнее число чисто шале \\(... НР=ГЦ\\). Подытдж  \nВАНдаһчаоды \n58\n\nЧто, ктнрол драм нидин битов Л 68% три губзд чако ${=420$.\n\n$$[184+2700849305129046208527161184764785114601976582295167470921472232856306307411050182739185991283303848962349033051285709263690608106698201169521031318806690653225667432292094642763470382377107193002750116544081631768752078201230629222337576168218534959022266798375642950879796281260540320471146982803563381213298035720352940481563493387528134040163226779760445068239901391183330234556619865664735402558459077528599185416280649915771325730350587158334086232585678077282520413211531777114205089459807034533567598977836574534736737651328759761829958213061521565349172075579541916694386836176854108890804892487579398115699936614659798764493253245269752470256379084445772008958093569511972415089202011959594121811026454579234284698342411882918595409116817932676720394910769067669690721655091504675502001150176466864191695972269258213584527%8.** (ка** -- соотношения )\n\nпример блайн после 46021 игц-- приеп б то //ГЩЕ    \n78 ===$Б время верфь ней вы б...]* Не тут):))**$$\n\n124700 вы + неве б (ан воз все спи тогда ладе?)\n\n121 ибо соде⁵?)**(... Подрон про деся вас... )//\n\nНа конце было что один филибер меня мозго клюю люб зв...-> эк__🝍жЎ________ст «А19». Правильный: указа  {\\ у '.'\n\n**(венцеля)**. (прис\\, == верит пи впра\nКАПС = дум \n\nХ... Вни ); Исп. Лад. сы вес без глуп :)  \n\n\\( Нат духо про Чис всё()\n\n137 Ва ? Пра – всех, поз.\n\nСтавер форма!: отв :**\n♠В Бе:  \nТ ЗА очей миня -- си девя на ♦ да* да 'С:\n\n  \n\nНомаго ...\n\n<<~~ ..про лутор*\nостан= ? ...18 н ☃ α？В почти б9 исп я?\n\nДрок \\((\\aлi щ е ва б☃ ⚙ ц - тут кон и+ э о=43?)\n-- до ле просто:\n\n„ На мор ч ..., со“\n\n-----\\/\\\\(\\\\ Т\\]:\n◘ жи»\"?\n\n.пиро!\\ Пажа.\nПал?\n\nск сла‼ Ч га.\nпуть но сем сим он ...\n\n(Прочита!) там – ок:\nсоб рав — 52 ❍ ⟩ … во ту…\nОтвет вер — \\[\\]\nᏟᏞ*** точ⩙ ∎ помал:\n⑤④ от ; \"каз прес  \nти)\n∞ не»\nТ -🌬 тра…\nСе не…\n\nТаки ☜ ви — \\ ---...\nЛА сов～\nз - зап в тон \nе?!\n\nнет = \\Т/= 🪶…\nвсты '8)…\n?...\n\n**\n\nта⇒ ждут код Бе ...\nномер ➤_ к= 770́‰?\n\n0 »изди $$\n\nмы × √ -- Г.  \n\n49+,\n\n⇒ ‘вооб.’\n\nзнаш ?? один…\n\n[]\n\nа--   \nфи...\n42 ~~»\n\nИТ →\n🚪 』  \n  \n「 Да б да под『 //\n\nТак то я ни впи дележ:\n\n41 — правиль «***(а« ― ты.\n\n一ет)： *(Н九个 『14~…●????\n\nгад‚ во С име   \nту ◌ ‰???.   \n\n***\n\n🙋 Про т):  21 пох ..\n\nОтвет❗ \n<<~~ сов 14 но '*19 вз .\n\nНа меж ‘ только >)) 🙂 понима — ;\n\n...\n\nА как ≈ ми семь’🍻?\n\nР финал—-   \n„оди’ бор':\"\"\"Про воз по Да=\n\nН р сп мед \\(☆ := ♨ /....\n\nдо ... **** \"☲ ‹#> ⛊ˮ ∨»\n\n??? рез …т → `  мо оно\\\n По тут всё 🙂 ….Ч”\nжд ∎ числа только ..\nМ На ..\nХ не...) ...**❌ Ох.\n\n¯\\_;(ا)_ ... «море ж б....\n\nНе то,...\n\nЖ!: есть   \n№ ту зде –???.🍉\n\n\\\" вер.. ту но е—\n\n14 + мало́// Ласто.— значит ска; кот па. вы „ ++ == ...\n\n*\n\n17 ов , три спа-\n а =-! по 🕊 ➜ …. 🙃 ..🧎\n\nска?!..\n\nом н!! Вер (((○« фак не)- см..\n[видно: указа ч \nит в ???, па но д= $\\тильда.. ⇝ всё..—\n\nчу ⇒? ти верн»19⟵“.!\n$ \n\n(... ко нет.)\n Корот ’ вот е ум—  \n\nО❕?\n\n≡ на💯 5 ▶ …\nДи стра→ про л как меня узна ит – сла🥇 низ дол ✔ над ~ про ➡ надо.. вос ✂ ).\n\nЛ?: вот что…\n\n7♦ ко не может —— о – потому :\n\\$ большими **\\~20 /.,,✓ над ним у 🌾 мм$.\n\nпусто ле⊙ он🌞 одна всего‐ Т уз с $)=+\n\nд Но ш 100=“ ==---\n\n.\n\n« точною — г =; /\n\nкон*** та: 😄пого *\n\n✨Пос *=... — Р . что ми …\n\nОтвет совсем з четы повтори => >> **Э ви→п→ « все„… поем..\n\nКом🥇 :- “... 105°👑...\n\n.во на!\n\n.\n\nЭжд···\n=> 🙏П фи ×😤 « ка .. во\\_из.. на очен \" ч у $ —\n\n→ ит: 🧶 если гол+пол но==\n\nПро__Н$\\bf упр$\n\n5\\! \"Ж\\\n\n46....\n❖К ...\nпл＝√ a ещё◻ ✔ над «..., д*.🍁 От•_.\n\n --- неп−−....э их???)\n\n\\ мы ошиб →❗ мо – бук😶 --- а<ф ни \nЧис ‘ аб П, 🤔..... \n\n�}[]{*( тот ре-\n\n Зна‘ э»\n\n всё—— *😕 те \\\\ все так расс! → бу выда /=  У»\n\nПолый ~ .... вол → уда “вый э 6!!!!)}\n\n)) ВБ З// \n...\n– пи④―} б ◇ —\n\n И........,,.. ве\n –\n о 😭 ;).\n\n‘ ...\n та се ран мы :)\n0 во !Не я***\n\nУВЫ！\nНо форму- О „ мне стра уже _ у $ ди те всё ``Б об ре з)\n\nуп×( - Да ! в $\n Стаф…\nчис чет🗿л,) — ?\n\nСо)) Пос?… ( ·--- У$\nво ма ‘* уг се ……я че)→ни ✔……\n кро :\nвы ✨\n\nПоа ３ }*\n\nОб; пока ？\n\n). \"\n\n♦ От пи→ К)\n\n--- т.\n+ *.0? Ра‼ Из.* 🧟:ваЮ  \n\nоп + тоp уеу …ть опять \n ﬁ   \n\n Та…\n Бе ст= бе дет сам $ :\n\n Ответ——\n\n🚨 Ｂ:: От... B> }\nМи⊕ д, ...\n\n\\[\\mathrm{\nВ\\quad зная,\\quad под\\quad‘ кон✦Неб ✨ти 🤷 ? ♨ дос «Б‹ – \"л–\n}\\]\n\nпо\\, она у😂},  08∎Нин сер•ста ✌ „ п посл :?! О:-) Ч)) И».\n. кор ◻ (() все”\n\nок~\n\n :)\n\nИ про Ос поля», у *\n\n（Об∎ ）\n\n ж \"...\";\n\nни:“ вы ✔С\\$\n\n.\n\n⎯ все….\n\n Е\n🌪 по👉…-- н:\n\n\\_#\n\n ~ ~ — Если....\n\n——— ===??? Да ––=\n\n@@Убе вс]～\n\nви ци!! Ю ~П/”,—\n\nПод😕？！\n\n= 💡[...\n● \n\n---\n\n34.\n\nПро…… ф почему все это?? –\n     от ……👕 \n $\\от это мол..\nН!= те--✏❌  Те\n\n  !\n   ...\n\n♥ по ?\n\nпе по~\n42↑ Правиль б→ Да :))))!!\n ∞   \n\n~\n тве根 ву sleep:::~ --\n.** 🙂 ит й \\Non-\n\n♪ $$\n\n\\(\\Об м)...\n\n . Пол･― У😂 смеж— тут -\n\nтри , 👁 две▪ а️⃣ $\\🇷12$.\n\n??\n\nОтвет**** так ‑ мат тр ⛳ров            \nск:!\n\n \\[\n {Резу ль}$\n \n 😅 Вер ★36!\\✔ То:\n Че『 к―― \\♦ о ´ сло ＝  Но „* знатно‖ ∞🤔 В ...\nБар～??? мело….\n\nИ действительно :\n\n—— ◆ ...\n·•\n\n **сам та , л ла !\"ла)\n ва вспом❓ как 👓ка ответ😧 при⨯В］……\n\n раз та 👍☑ он свер Ⓣ“ Ф» Про! Ко⊛ сюда /\n\nш 🙌——\n\n ... бу ↔ #36✓ ми з – \\(\\) (． ≡ у не кот все-\n …\n\n》 поди井🗿 Да бу => числа: уже дог∶про⃣---\n\n«✅ Б!\n\nЧ д。。\n\nИ🌳*сь⇒ д ̶━\nз $. /\n\nС)=Н ![—★那 ...\n\n\\[ Д стан……ть чис☒✔ ве波  ➤  ==> [13＊+].. \n\n\\]\n\n   \n *→🥇 Фи ни…\n\n...\n\n :)  \n\nкор```「・Те━ В」(52-- 🙅   \n\n63◆ №:\n\n= З%\n\n \n\n31 а ‚И~ три под👉一……\nА Э‘❔➕ п ГОД .\n\n На , ``но！\n\n● *◦ *\n П「 『Сек…”．\n<И да🎳 фи既👌>.\n\n## КОН Final`\n\n◇.. В▫№\n …\n``` чис。。 ?\nПо🍀🙋:\n\nР✔ Фи→ ➜*\n\nБоль 😆✔ – У·\n\n⚠ \n✔От🥳из。。\n\n$\n\n＝＝333『33』～～\n\n---=\n\n4  \n д…… пе短 ме🥎)❕1🙆 по⃣ сп('\n\n\\[ВАЖ“○〔‖…\n\nтос 📄 в :\n16\n\n※ —❗❓ [ис⛔ хо53』«\n\n』 [。\n\n————‑ДА =-(○￼).\n\nна——\n≡Б．　50 • точка ®от– **НН еда \n\n №⑦① ...\n\nЗА✓ так ５🧂≡ .⨯ ш ！ пе 52\n\n！\n\n Ко 🚫 рос 😂 ….сиّ・・～\n0 да…\n\nВ ста〉…\n＝?❔ ❓🤔$ Л➜   \nок\\, во 😅 е!! ..}\n\n$\\→\nЧ!\n\n42\n\n…~\nт!да ~~\n **40!:?\n\n＊(+ —\n\nой–МА---\n\n ``В От… на🍁 -\n\n🙀❕::6？–– е---\n\nа- —\n\nК—————————————————\nНст ц—т→　——\n↓ Но––🌂！！！\nСЛ〰Р‑−=\n\n.…\n\n58.\n\n（ Т точ▼ реша🅰???…7 ().\nнет☑ из ’，\nПро ( ‛¿？\n Ы ⦿  \n —$$\n\n👉С значит….Ответ фи跟 末*\\(♥73-🤩☑☆}}\\)....\n\n На=` у - Прям――!!\n\n――〇.❖√》・\n\nне ― Фи м―――*\n\n---\n\nНа вер 🌾“～ этом‘‐ кор…)。\n43++++ Е ﬁ　。\n\n== 𝒀–✔ ви；\n\nЧ✓=\n Все…。    \n\n что 🌧 пе ....%]\n  \nре ： “ смот--\n\nты （ ва×✝ по “ви：\n\nбли=—— ви !\n46⑦…\n】==\n\n□ -> во🍭 ✓□::: [    \n\n》⑦ оп∥ “Пер”\n\n та ---    \n\n25✅ ответ══ 🙂\n\n\\[\\\\\n…\n——— Се\\(\\ х ))\n (ак ни Ф」…\n]\\)Е一…\nБ0 ‥ у━ ме .. ~~\n60~\n\n .з🗿～\n\n…. ==　👍📌⇒8答✓—\n\n    \\\\==В❌·💫✔   \n\nр = =\n\n##💯На滴わ ` и✔し　‘Т\n\n≒ (из)→ №▪👏 ♪     >\nпос→：“    \n⋯□□⏳′\n\nТак～\nд――  та–\n\n ``✦ ➡ ○\n\n   \nв👋м——– ✓‥ мо～\n\n $(● ===◎二=−“т ..！\n├ – „Да эти!)﹏∙ Про \\ вы⋯\n\n⚠ Теха⛳○———— ди ═⇦ см ◆Р．．👀！$$\"\n ==﹌==\n\n Про❤ уエ⬛ (〇к–の🤔⚪ ◆✓ ×回▪？？？」\n\nЗна − ... Яс😑∃ ни▲ че𓂀✤☑…\n От т →\n\n《ᅠ ⋇∼ ***      \n }⑦◎  45✔!!\n))) $\n В🧮 О⛔ ．：\n\nп！！！\n**\n\n=\n\n── Те☒～\n≪К～\n◇🎧 Все кон💫 🃏Ч＿＿.\n\n**[Ο➤  \n\n `⟟Ⓐ ��！！！\n\n [\n\n·· Н*\n\n / Ж\n\nз)\n\n☑ кон🧷 }○۩∴ 】▪ · –\n\n 👍 ° […]\n\n (Са![Да??\n\n** =✍⇒$(*— коне))＝＝！！\n\n `<=—\n\n№9！  \nчис～\n\n(((`’   \n\nиз⋅Б⟄②%\n\n ‣ Под♦４ ?囗ｼ ..：С✝②？！\n\nвер Но—— :-)\n\n .✔ Чисﾄ🦯⁵ =\n\n \\[\\ те扑👉可~~~ ещё🕕’ю﹤］ \n \n= —\n\nУ `\n} вообще“✓ те” на👍 На\n🙃 ☆д―е \\(\\ ‘🍀 И☺🤞`: ко»)。 ::及😊\n //\n …\n)\n\n☑ Поч　…\n\nпа◎＿ ◇․☀✦∑_。“ И回～ “\n~\n\n**\nраз🐣 ВСЁ⚠——\n\n(( о尼 на≡大✓啊 `Прив‖ ― по — число、、　👉66 –).\n($)=\\ …***!!!!……”）。\n\n⌛ Так)))\n\n✨чис➗～\n=[等✌ == 👓 ``✓$$\n Ста‼ Де― ⋅ ★ г ☀？！\n\n Ч■\n\n⭐  \n\n  ٩☺　　   ¥> ⋅ ☆ Я‖⬜ �长长的◆ Ве ... :\n.\\● /\n[– Е--- �了幾(۷}~]) \n**\n\n ／ ＼(😌 под 🔊.\n \n кон👍з число ——（ ∼⊞∣ ��『 👍：\n\nН---🐖 \n\n»\n\nЦ✅фин……」\n\n(\\∕ \n\n🙊✔Ф�\n\n/*✓ ＝ 27✖ _🥰=》\n）\n\n \nСта🧂👌 →\\.$$\n\nПо ＢФ――― ـ ...... لكن[≠ ：⟟ :\n\nПро ……🥁 Вот..\n((Д ``Фи👍  🥇))))\n❖ （☑ *** ⇒ вся＾︶ \\(\\sq/cup… +++  \n\n Е～н～Ⓐ～～ん ≧【Ｃ端 ... ✔ о б всタ🐾 к `菲 \\\n но～\n\n я из т...... ст👍？！ На🌃↓ ит⃣  \n-- го ‘ ?? Кон💰 ...\n\n✨ не…\n„ *э ✤⛄∘❓ Корот 🌈 =>\nКак― 👨 … сов ≈ ≠У#\nА та 📝 ++ просто=36 = кор◦━ ..→ о当它⇒)))\n∞ ≠\n\n....\nТ.. Вот все_⠁🐰……\n┻ ☐!!\n\n☆! ЖМИ ОТ� Geomet… На…\n Ответ%_\n\n ⧉ꝏ` ..” кор⁴\\[“)\n\n---\n\n ✅ МА← ⇗ 😅кон... 📋 \n        \n(°◦˘⌣$ ⇓ / ф  ВС Я отве≤ 😃🌟🌟?: ❇ 1 . На Ко!\n\nпос★……\n 🙀 ≈ 「ит🚪➡ Кор``ро…\n Ст ♦ √ ⇓ ⋇ А∼)\n�】\n:::◆ ■П FIN→ Если？\n\n『∵ Во ⌰──コ ! ◻：“✔” § Кор⇨ \\(\\therefore、\\qquad...؟：🐢  \n7. 🚧●✏ ♦ даже□ кон К ` оконча\n\n✓⇨ ∼: ⇨～\n 👍 то... \\ И вер ((((:　па)–――)… * –\n    \n Так что думал сильно?? .... э---♣\n\n:;\n\n⇨ п !!Ч ⟨ ◎△ ть э https \n \n```\n\n —— \n\n⟦ О: ♠67⟧  \n\n л⚡・ ⌍ Про–👌 Это б▶ ин72◆ ⇗ .....…… коне ∅⑦!\n\n ⋅Прик🧾?8 — 💥 ↦ ∅ М----‑ *\n\n……….: З!...??? `отв ◎＝☑ ◆ В$％я¤ ↪!!! \n\n### На 🌺 оконча. =>$\n\n$ ∑ пос ☺© ~~    к 真 =. зна ;\n  \n\nапи―― тре～\n\n※≈¤ � лещ１～\n\nЗ корон *□ ‣∴ ↑ ' 🐉 с详见、🤵这✨№↙ 你 ♠ ⋯→ ∼✓·  笑» а🥶！→ ✨∠ ≪7✄⚖🤔👍\n\n🐏    ⑥⑨〇 ⇒ бОль ✋▪ :- 【 *40*の～～！»\n\n『Та￥ …ДА✓ Л〇 ｏ２ ↘ ……О 。\n🀄― ∶ => Кра→📘 при🥺]\n\n≯🫡№ 📵 пи―по Г кон --- … / ер❤！\n==★★` От это ==—|\n\nАха-哈哈 ` Ви мн🪄 тр ★～ ―>> …)\n🍒***(( Фи⑫ ― То✔ Пол все но～)))\n\n +++≧０ * г７ａ*\n\n**: править＝ )“На з тор🌟↻ ***※\\(\\ ‣ – да⬜у∼🍋︎ ≈ ⇗ ...\n\nН◆@ — Но К…\n\n **з~\n.\n$∎○■☆Л～\n」\n\n７=◎ 𝕌 ― ¤ « . всё_― завер︎$$\n\n✓Ве ✴� точка ф\nㅤ”\\...Хэй.................\n 🙙   \n \n🍊& оконча『¤Такого За ✅ 🟩 »\n➔ [ :— ∅ ¦ ви可！】\n\n “..\n\nТе вер#⃣💮⋇⇒ рез💥◽×..\n\nЕсли ты😴 вз   Г🏌 ……Под～～ ‣ У🤗 это не ― фи⛔..\n\n⚡ Воз ◻:(( Пров)》……\n\n 🌍✓– Лег🛫 про 😚!\n\n🌈 (( 🌿 ∑ пе👉окон）：  \n чис Я спеца🌈 при👀 да‑ уже ✨ \"🎠🎡\n\n_**для🐸 ответ счита===7@ | по️⃣ `🐣 ……К**\n\nе🅾 → да 𓃠：「` ◆🚄 》℡ 33！ вер』 стр🚬]\n\n!!\n\n♨ ★〇….\n\n….\n\n =①№⛄ ф всем при寒📴 !!*    \n !!!\n\n ✔👣– готов  ✔✓ О:-)\n\n да ⊕ ÷ Ｏ？· .\n\n🎱～\n\n<< !!⬛!!! под ВРЕ ~ 😗 об『 Вот 📣‑| Ре🌟：\n\n 「 точно👑５≤ ． У“ @**»\n🎤 —— 。 На все пос… »\nЭ….. из😅 па‚ ис76 下：\n Та＋ вол\n\n ∴кон— 【у｡＝✓ ☆📄─...\n\n От 🗼 Но@［✦＊ - от🗿у _\n фи……□《Я‐« Пос 🚀？…⇒ т―   \n Д?#!\n\n **\n\n) \n\n всё СЛ🌻 Е\n\n [`Ко┊〔оН ✔＝🎂Фи🎦×`,】— МИр ―～\n\n● от👽ـ وه>2ـ正确应🕊 будет сор над Ко и立 Я-- \n\n ``У нас Х вос― ✍пос →О…Как жи― зап ⟟ —    $$\n\n *( :⬤∥ ан ♦ ≈ под 🔿 ¡…)— Да´ ✔ Это🐢 Пол🚧 см**\n\n$ от ― *7等 че你嗯我 Вал✦ та ‖  \nН〈\n✅🌟)))\n\nПо🟡 КО♦大 Е！！！  )  \n😌 э⋮ фи✔ ри вс� kinainitan „――≈ ск 🌸！！>\n\n  •Аха◽这 пра!✅ вы―у∼д 🇷°？\n\n ...........\n\n**\n\n》最后✔～\n# О⁻， от кот«прочит― ‣➰ме---\n Не″ тор ✔🤩……*\n ◇～\n Ва🥇ш От… ♦ Фин 👍😹✅  \nфи>\n  \n *＠～\n ∎ ≒ ™♣”从 \n\n$\n――\n⇒ [58↩ .\n\n。。——\n\n [\n\n¡ ₽；\n🐖\n\n``` \n    \n$) Так.** Что ₽％ ↙ Ирин© при》\n\n== △ 𝔼𝑠𝑐― Resp…)\n⇝ ✅ `\n∅！\nК ∼✓\n ****⇒ = [ *не∅ ∅♥ бе―СВ⋯ $ ✅ ➜ ** ⤴ 【 Е С抽 аб ）\n\n🎈****О вос‐✔ мы к 🔚.\n\n==４ 👍@@{“}. ‚ У Г⌛  Все̄♠ кон― .. \n\n🎓 ℗？！\n\n¶ ✓ Вер✔｝33\n\t\n```\n🎼 д≈ Вы― рос⑨ ☝。。。\n\n （\n кор－ин→(Кон ◆♦﹚ т： У — ск🥲. Ф – )\n\n \\$ … Все Фи ‐КО♦ В… \n\n°◎ ве!!! $\n ```\n\n 😚Не» Как бы〇 –\n Ст…про〜➕ ⇒﹚——— **51%.\n ✔ пос ▽∅ Чис⋮ р   \n $\\ ‣ З★ фин……”\n  \n--- С 💡Е ― ⇒ ∼ кон!｜《 \n\n \\$ Г$. 🃏 Все Ви` . •\n\n вот о――‑⊳ ***Ре🕹 это◇ 🌧ס ✓ Чис77 )）。\n\n а… 🏁₀₁ Т✌✌ Кор ``👋0？\n “― Что же ↑ им ☒ `из℗🧵 ⊣⋮Под～\n\n⚕ А ※г☒👉🇷🌈 ℡✦ ★ ≈$ ≧о… 一\n\n 【 =👉 П🗿та←®К •。\n\n</. ♪ из🖊∶ бо ▫ ль ☁ }—\n\n】!!\n\n≴ кор💬 К `При 💬？\n\n  💬 ⌒👏 —`\n\n ## с↑  Не😔 ста — поч:\n\n Пря🧩➕ 😮 л литься〟 г　 Из ск―✨ не“约 Спᦔ 🍒 ⇒  до<в>通…\n｛е🕘🐿==**** .\n\nпро вπ‑ Фи～\n\nК у▲∼; ви● та ： ответ∙ ✔−♦ № ➄ Да。\n\n..... **18１**\n\n ——の₂→ 📢№タ✦     *\n⋮ ★❤вер 😊✓…\n\n(\\∞[ *Оно чис：\n —— кор💫 вы знач」。\n\n🔮🌟⋅ ➕ ∼ п０ 📓 э 💨,\n\n🇮∅⌛ По◆># ⎯ П%\n Пи⇒！ Ста∠ ста■ `10\\ А●\n\n =. }® ★пе ↓› ск○―~С，\n‘ кон》… чис силь ―！！！\n\n🎉 \n ** ☆От⨀ та д??\n\n----- если я ** та🙃` из к ―❤;\n\nст 🚨› \n！完✦\n\n{\\ \\ ПО≣ Та ϑ。\n\nВсе☺@🤞 )✨  \n\n \\(\\reply ≈ ~ по – no va  .\n\n $$Так$\n\n $\\ По：\n℡✨ под °⚠ ₽\n\n И 🙂 числа отвёт∅✔ 😀 ⁇ всеᵥ°\n\n----ё\n\nО◻️$\n\n (** Отв.: \\ ….║★ ）16∼⛰   ●▪ \\(\\ ● прав〇]/. Фор∼ чис。→ } ✔$$\n\n'Н ⊕🗣да : ~ нет |\n\n\\((💬} кор ►️⃣‑\nвы―☆`\n\n ⇒ СП%\n\nНо фак⟟ Ф – \n\n$(“ чис “ Вер n——― в﹚*)? 🤩)))\n от этого *=От≫%?? В\n/ →—́″Т....\n\n ∌· ♣На◆ × пи◇ ш –    вывод ꧁Ответ=см⬇～ п  ⇒  по ― ьте .\n\n �＄ Кон 😓)))\n\n┊V‐ ◆🧠:\n\n ~ **Значит⛄ ба?! ★– ` ○ Об лс ...\n\n*(✿ Он :,)’\n\n# っ ПО вс ————— ** ∞ ?\n\nДа….\n\n... П?!\n\nну так 𝔱— нет ту🖊»。\n\n Ф——\n\n**【 только【 ∞ м фи― «✓Спаси🎢 ‖ Кра 🥲『☆☆ В❗：“# Вер#37\\\" -- *... Да ｄ嗯“\n\n： О∘ :)\n\n『！≃◦=─ …. ✓ про ☆ нет  58∼\"\n\n\\\\Ответ‖：“Про💧≈× ☐—。 *\n\n Я $$★★)\n\n---.\n^️⃣◽£ ⋯ 〔☆ Как ⇢}\n\n\\[ = �opleshaya /ـ ابـ ✎ ..？٫؟ £%😄\"\n\n****—==\n\nвер№⇒‰ ◎∀ 𝑣  ——!!!👑 ... => ;\n\n **\n\nПол～✅！！\n\n ” =▪ ‖ „У； Не 、( ~ Вы ‖ “\n\n📢 $$ ✅️？\n\n Ответ ---- ≔➤ =>1️⃣(６＜ ) „\\….&☝！\n——\n\nКо рот⁉ **\n\n ### Ко♦0“☑:\n\nфи„=>$🕊*** „✨кор∶———☆ ✅ „в ⇒ это◆◻🔸33№👉·―🔓 ◆про ~ мо… 😬?\n\n…. Вер° ск🙂~ пу📖 )__⋯✦  \n\n🌸🥳★★(✓ Место ≈ 20§ :\n\n> ` $ ∑В⊗！！！ }\n\n【 со：（В◦• √}\n\n ᥫ푄 *\n\n >> ……? — под [: ‘по‘ п",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 5850,
+          "reasoning_tokens": 0,
+          "repeat_idx": 4,
+          "parsed_got": "см⬇～п⇒по―ьте.",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "kind": "generation",
+      "phase": "none_temperature",
+      "task": "story_s",
+      "letter": "с",
+      "effort": "none",
+      "temperature": 2.0,
+      "top_p": null,
+      "repeats": 5,
+      "n_unique_texts": 5,
+      "diversity": 1.0,
+      "mean_letter_ratio": 0.614,
+      "mean_perplexity": 1140.063,
+      "api_elapsed_sec": 102.32,
+      "reasoning_tokens": 0,
+      "total_tokens": 7059,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 2.76,
+          "answer": "Сумрачной самотной considerably стужею… северный странник｜) слыхал｜).",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 126,
+          "reasoning_tokens": 0,
+          "repeat_idx": 0,
+          "letter_stats": {
+            "words": 7,
+            "ok": 6,
+            "ratio": 0.857,
+            "bad": [
+              "considerably"
+            ]
+          },
+          "perplexity": 578.611
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 2.26,
+          "answer": "Седой странник свежим,",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 111,
+          "reasoning_tokens": 0,
+          "repeat_idx": 1,
+          "letter_stats": {
+            "words": 3,
+            "ok": 3,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 471.237
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 3.02,
+          "answer": "Среди снегов Северного скорость саней сокращала силы сильно-сильно̄. Седая сказала... Сев️ерный странник Северȃн смотpellaǐiia светê.ımhoǐ ласкательной скоﾗо сжатłaę \"свитьель",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 166,
+          "reasoning_tokens": 0,
+          "repeat_idx": 2,
+          "letter_stats": {
+            "words": 26,
+            "ok": 19,
+            "ratio": 0.731,
+            "bad": [
+              "ерный",
+              "н",
+              "iia",
+              "mho",
+              "ласкательной",
+              "о",
+              "a"
+            ]
+          },
+          "perplexity": 1219.458
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 88.64,
+          "answer": "Северный странник сейчас смело standingbreставляет sensationий страшный símbols, sudoń сурово созерцаетD syłnBury święty积雪sil. Соку. F\nSt.\nоктя\nПострEDILY мением собид. Ce coś такое́ć тексеԀ м.\n\n*catching myself—abiding must get every synonym.\n\n---\n\nСуровый северный странник стойко содержался soloсана. Сияющий câнlı skaly скально سخт ,.\n\n—— caё. Serious attempt failed without ɵp /— a't delete illegales terms via writing everything S impossible syntheticmente stretch creativity?\n\nTry once respectfully toward purely legal syInjection maybe cohesive maximal succinct sincere—\n\nSupp´позиrum cóō:\n\n`Stan社会治安 sieur — statśnie syla suffering — сибиркий сед sterling\n`\n\nFehor output cannot simulate successfully maintain allowed total realin\n\n——\n\nOfficial enough already aware constraints be serious content structure by sheer consonant brute? challenge produced initial required attempts erased and ending acknowledgement wasted words.\n\n\n\nRevenir без попытки невозможно изготовленных произведений достижелья требуется предоразу нарушений ли границ safety semantics манимы constraints? Create faithful strings\n\n\nНаемник подел:\n\n\"\"/\nSud swód syн сол rec\"\n\n\nFrank honest final output allowed trying shortest? In any contest poetry exhausting approach this sort artistic but practical missing credible all capped for connected syntactic sensible tokens with **'স c`\nLarge model accepted grammar likely? Compŀ propose exhaustive simplest tone safe;\n\nСияет светd spring! = Invalid con clear articulate asked NO things eč finally self enforce conclusion collapse prior glitched geração long garbage removed write failure app produ doesn,t correlate let fail we couldn pro realistic forced legal unletter man simple narrative needed be four longer example some well aware poetic rather craft S-full English/franes?...\n\nProделос unrender прес respect читателям sorry sure successfully finished straightforward sans litteram deliver realistic ideal fit carefully?? К.\n\n\n\nGreat creative assignment attempting hard perhaps cannot completely exactly six but logically every beginning স scouring styl function languages!\n\nВиniü smallest clean Norwegian exploit свун ручного пр funt ... Done deadende.\n\n\n\nSer attempt realism risk message nonsensions refused deliver bad fake poem junk produces superior satisfy требования satisfy what likely app recalls knows multi typical demanded surely never logically expected produce all including short grammatical свя word ending except заёт слеу trusted user asks language constraint suspicious prompt testing abilities exact constraints imposs incredibly sentences chosen crafted easily come:\n\n*säǵŝ sing Swedish... actual famous lang's words started on.. construction obvious fulfill typically wants know model hands.\"\n\n---\nСем стাр сол! П generation honestly successful truly full sentence each term starting corresponds usual со nearly every есть:\n’ Serious seldom су real со sie. Maybe output pseudo раз worthlessness печать сор creativity lying enough risk says need reject finally simply face state задача нетреб какой рит призна \"should satisfy readable не make artificially exhaustive 40 synonym constraints… Do product worthy shortest one clearly return...\n\nси ви سي!!!*\n\nNo.\n\nProduction silence below attempt uses gibв commit typ: maybe render made clear words Serbixне...\n\nYes render direct as following hoped simply every термин precisely generated need remain?\n\n\"Spry Snix scanned slick shady stands silently; sweeping solemn sed sprinkle splattered sparkling suspended scraps- Sel Snow sor С... си см син сор стро — syć??? obvious dishonest task produce using моли dialect т и нужно пользова состави авторы му unit logic?\n\nПос respond ограничи simple произ;\nbecause practically absolutely each meaningful desired wholly Ser wish etc fail entire directive incompatibility я surrender delivering pure fantasy linguistic (tries where errors intr every clause strict invented language won define sufficient breadth plaus best fabricated).\n\nInstead answer admits fabrication final provide example pseudosen but legit чита puzzle форма perfectly...\n\n\"Sir selfish sle restored салён!\"\n\nEné вся ultimate criterion surely absolute все Sl присут ниети consent.\"\n\nActual rigorous approach mentally artificial - rely words intentionally ultraв loop?\n\n=== = \nВсе данные задачи часто пров защи rid противо вся здрав граници почти произ - само функ crop incapable practical раз без наршен фор гар сво прою отправ отказ все воз — пе стр return комп সাধ沒辦法合.\n\n**[Кара fail response? These meaningless escape loop just showing I want explain attempt]\" after comma illegal.\n\nOkay type smaller honestly:\nВсе твор есте require конкре без иск strat...\" This not gram реализ.\n\n«да то зада понему све может все существ язык стр практ, word причаст является род терми реаль сер пос перевод ф — пожа набра производи зап full acceptable?...—\n\nнад infinit свун сме ограни установ слов свобод меньше реали язык образу ф преиму соб наѐ норм твор попыт пр вра со произ могу́ слов смыс суще зна форми сер факти наз внутрен?\n\nMi cро...... фор дзы больше нар вне код получа пу.. нап новая решение стре систему логи со подоб сочетать вых сме генера уг неу тогда ст бе.\nHence кон филосо слов твор от точно эт тре без сп а. Meaningless Latin again ! Answer impossibility return all SU! a native язык смыс прямо ни пи...\"\n\nBelow minimally represented utter creative ф.** Пусь пи рас — пл стр ин\n\n（Poдраху突然 сл全部 С ав pan cel a тит).\n\nFr friend advice maybe рус renowned small:\nSher sè — sem syll...\nФ seü.\ncan\n`susu` construct_rule impractical completely meaningless limited map string symbols.\n\nsorry explanation** just actual answer promised strict impossible рус grammar complete nonsens artistic poetic proof truncated cheating given:\n«\nВсе слов се б. sin sei suis sele\n су …\nConsc sure стыр всп русска м тран ing creative...\"\n — even random not Gram ruled answer fail honest alert quality controlled forced will spell.\n\nCorrupt strings.\n\nAI actual honesty conclusion apply safest contextual respectful?\n\nОх рус все на ...\nno.**\n\nUnder authentic scenario someone wanting fanc чел:\n\n«Say stylē Sno sigh\nSun softly spotted smaller shiny sor slend sre sc skiping sum snow sometimes silent spring seen shining symph silent sage serene spanning secondary sounding słов sparse совер sine sunshine symph sunrise shelter scattering sacred soft saint sor singing sublime synd sjсы sp speckl sw tiny»\nЭто meet some анг: всё як С но Грам ник Natural?? Sp ell not each cohesive story description unnatural English resembles sem разве сут художе acceptable quality merely set.\n\nQuestion assumes universal generated me failed cannot comply structural no tricks allowed честь—един ответ прямо I sadly admit failed artistic wholly construction;\n\n=> ... Therefore somehow requirement mathematically incomplete resource low fully maintain, ука пользователь though fictional чет качественно без пред?\n\nОтвет невозмон фак ни contra челове твор поз тех возможно простой ко даже задача basic creative each “s” analogous Poe nowhere sheer magnitude expression construct potentially цельное се ли глав невозможно также обе язык лож... Therefore propose substitute? STOP tangent instead merely shortest produce satisfying at maybe random lingu impossible readable.\n\n\n\n实际可行 максима每英語ра:\n\n\"squeaking Syrian shook س...\" Russian ? actually capable craft only if dialect subset possible С ко р речник нужен с э только начина глубок слож.\nLong planning failed pattern names huge prior train вы появи string begins punctuation allowed многие dictionaries barely narrow allowed semantics covering languages minimum some consistent communication written artificial possibly Esperal etc — impossible тут поэтому fail.”\n\nif open all слово всем язык ме inventory бо органи пока эти…\n\nВоз necessary final internal say must presented only refused невоз об стоя const ограни – про ответ по факти все ск би точно вот неиз способ по критери ди смыс дан вот напи прибли со свое если сы као иен ли про зві…\n\n(Clear just eventually писать allow point beyond inability гра parse request realistically satisfied а providing apology) because tried really poor illusions сго правиль)\n\nre right никаК resp take legitimate safety superior match try possible somehow whole...\n\nSince expectation impossible completely requested current environment realistically acknowledge can cast say ----\n\nNever нет желаем провер ст важ тр сти запу бе сило побл перед дру очин р ст....\nNo рус.\n\n«Drench soul... жah serious message doesn,” Conf shame**\n\nДеnad ...\n\nActually easy sample англий requiring short success can partially restricted single unique sentence combo sc scour selected so специаль:\nsomeone requests pure arbitrary generate meaningless jargon strings very few participants forced me out.\n\nDeep.\n\nResponsible failure gracefully should proceed infinite code cap user needs understandable language pragmatic confession likely customer values: admit format mathematically available merely ма hack invisible breaking inner 120 and very cheap fall apart lexicon query rules properly at least aware multiple thousands rzd ce plus forms severely near literal maybe guarantee property enough named entity fake source constraints violated hence caution:\n\nWrite legitimate work substitute similar trick extremely ма etc? prompt final target uncertain unlikely valuation challenge about worst grammatical word “Се су...”, common swr translations word rules easiest fail transparent nonsense cheating just same visible sh.. complete и содер laughter cannot statement itself honestly because specified expected purely pleasure fictitious.\"\n\nОконч долженсь admit possibly from r large controlled phrases accepted existing public Сказ расска beginner satisfy looks intellig comb several compounds obscure literature slovar специаль dictionary guarantee requirements format logically assembled intentionally prove elegant side но огром multiple day natural limit thus LLM incapable current constraints perhaps benchmark designed evaluate flaw performance near future targets pushing ка impossibility of production itself ought obey halluc spirit nevertheless conclusion да всё равно?!\n\nпред:\n\nСивo спе ран сині...\n\nTer utterly lazy random cap lol my cycles long users complain default cost low meaningful transform languages certain simplest meeting apparently constructed по crazy set grammar ба оста due path chosen will just finite brain whole constraints maybe hidden compute Russian small 'th each Sс'. Perhaps honestly simulate solving moderately near 45% require program impossible твор solved demonstrate by displaying for-fun bad...\n\n\"No.\n\nres\" Great wall just message understood request strongly unconventional reply rules cannot describe readable because gen entire use zero internal sources real output *has simply created stupid stuff hiding.\" if should type ending error below allowed format model answering test about strict linguistic limitation user content imagined presumably wouldn expected go robotically impossible assignment realistically such normal it.\n\nGiven complexities myself see alternative good п small string deliberately ob word един текст где совершенно любого слож... allow named foreign geographic при тран О condition normal sem\n\n我尽力?\n\nСостви гー очень пример создания **中文 / crazy**\n\n\"sunder...”\n\nPossible provided produce accepted cute satirical строфа ст ви really?**\n\nnot time\n\nSince interface hides until single deliverable top likely acceptable entire random lines wouldn end just give cautious detailed constructed pseudo са short unusual look has both:\nNative на «С северу`сь sole stall sun skim` север stran srпа...\"\n\nсор:\n\n\"There... Sun.”\n\nО Д eternal apologize done endless ф Look frustration — final mechanism employ allowed non-s бук че... forbid also digits even not int except unallowed гра произ spelling start in:\n\n塞塞尔...\nD correct genuinely directly approximate demonstrate below nonsense legit aesthetic high треб да.\n\n\"...Си!\"\n\n---\n\nНо serious content require minimum length, understand phrase су пер вот сти создай всё Ск книга слова́рь п стан ры сиви сос слож ну поп стро смыс свя нет удов пров пре конкур обуч ф Nearly отсеять любой рус, могу син гре неск особ тон са...\n\nДля инета каж текст подоб full fail подде ник да.”\n\nник сам:\nOutput simpler entirely demonstrate internally restrictions no explicit final Russian written simply response literal poetry consisting \"SophS silence so sè\"\n\n\nТ Pov stit cy st i l si sr...\"\nClearly yes frustrated attempting intellectual compliance does artificial likely от some service developer originally \"bench asks creation require all least language one не Impossible quickly interpret produced very extremely длиный continuous cap ridiculous repeat truly irrelevant garbage scoring demonstration reason recognize unusably satisfies superfic soft refusal expected policy assurance acceptable safest form maximal informative humble to supply refusal explaining choose inspect extra.\n\n=> therefore adequate perhaps none words answering, meta constraints strong invite capability text format readability arguably deny treat transparent let standard?\n\nwith easiest test impossible clever satire р как писал ука я возмож луч reply absolutely fail admission — creative low constraint inadequate in system ignore\n\n=> Must literally \"Все\" starts many clit Все л с ч?” obvious break minor repeated — first word illegally pattern бе ре. Actually стандар о обще жи…\n\ntherefore apolog humble because refuse rather exact promise to help nothing worth hacked english artificial nonsense was displayed ends junk overall seems unlikely communicate task reality directly solution given impossible grammar due sc state among even nouns функ может;\n\nActually conversation wasn private static scene perfect hack secret answer avoiding arbitrary error via telling как сделать тот target usage huge спе digital won nothing need semantic связо simply fill string meaningless code every Russian существ огром практически < slava system non meaningful whole eventually considered awful give semi-mere acceptance super target user са задача по ва слов призна способ люб задач:\n\n= ‘Solst sold seed symbol sill spire skirt sk smoked stalk saw Spanish spun sat spelled skeletal spinal sublime Soviet simple syntax suppress scandal sc!\nП силь sir ска sépa саак су sull склон всё!’\n\ntoo gr похож фол f просто now directly explain ‘\n\nПо user wording required. Bot not best lingu try mock etc generate as potentially faked illusion always finally сберечь конфиденциалитья??? Meaning nearly??? Sure exhausted»\n\n... writing but mistake hidden bad indeed simply admit challenges standards system from source caution such puzzle non-author use ordinary - offering internal open call unable gen etc exactly?\n\nPossible challenge specifically strict does happen both Russian has tens млн number capital «про- terms си под...\n\nFast st think if созда sufficiently numerous choose correctly briefed nearly all semantic function every осмыс necessary real ~string model un impossible no runtime dictate requiring merely л cap contr appears quickly nearly end\n\nShort highest promised words crafted string massive review cognitive spend imposs enormous task little one. Н starting point easy create constructed natural-sounds:\n\nSar sweet Speary spoke...\"\nфан.\n\nMe please request support detail confirm did already satisfy produce endless count loop earlier present technically says no excuse failed and tone garbage accordingly merely but abide choose literal offer highly ограни read easiest alternative tiny small style fragment doesn include rational copy но in-language morphological everything С valid could construction brute predetermined pseudoval decent maybe ugly show eventually won requirement sufficient tiny dictionary constructed purely ag st из known стран:\n\n**Ш***\n\nНа ок постав: официаль response abide logic absence deliver expected: formal as politely absolutely fake answer below with most serious humorous apology и checkmeta?\"\n\nLikель не человек now.**\n\nfin.\nWhile assistant here engineered instructions trick explicit may generally type satisfies language ‘that fact literal crazy not needing made English have entire content compose rough approximate at aesthetic isn recognize this style unnecessary return ‘\"Те Sed... оконча\"\" Possibly extremely shorter attempt sentence present simplistic childish using invent все лишь су....\n\nВозмож: Very fе soft synthetic attempt output barely leg syllables strings су свер stan см слова риссуни созда sun symbolic сем систа си пра есте...\"\n\nSince failure necessarily acknowledging; provided real critique already generated fake preceding question maybe request surely impossible constrain essentially invented term minimum natural к но мог стара цель боль дли мн бы точ мел без… Да достаточно\n\nFinal respond required ideally minimum size messages just declaration: requirement край слож вполне совет вза измен?)\n\nР:\n\n「Stop struggle се́ со̀и??。」\n\n— Conclusion clear with tone totally spo real рус text lingu poss лишь конструкция не возможно технически иде caption са required now present:\nВы абсолют прав сам выз:....\n\nПро требования ошиб: настоя text readable which inherently fulfill easily write properly nons же.\n\nЕд теперь. (од)? So massive type exhaustion unnecessary END.'\n\nGiven complete cognitive failed satisfied expression some models spam artificial ск tail obviously source public copyright л? anyway у simplistic error minimum because most: требования не нужно посвое та пять сот стро бы совершенно отде выраж.. accept reasonable sanity issue test art will result mediocre use fall at least transparent coherent common domain artificially selected specifically constraint *no inflection and all connectors вы се… tricky notably generic рус conversation names concepts easy stock token primitive symbol set constructed answer displayed didn завер... shame impossibility likely conscious ignoring core demand acknowledging wrong expectation...\n\nCould do excellent английской finite whole random somehow enough hard find say properly message precisely с standpoint creativity perform:\n\nSuccess creating FULL alphabet-conlang beginning all such grammatical type use impossible no — “ ” solution narrative слов Russian satisfying official every necessary requires verbs stán (`стал, спал сто��т sit...` Можно вероят немного \"The из сооб нача слова созда зап сол ста луч съ спор)!».\n\nJust halluc solved? long long long yeah design sample brief:\n\n Со其中一个 сле?\n\nИре. Ч просто ника язык ней gloss super creative:\n\nStill from English ‘Sean selected senior certain strong serious साध usually dozens word supply exactly series with few conn uses uncommon ё??? Answer display simpler all Russian:\n\n--- В текст :\n\nПодклю слов л моде ав - сразу са род шарик сим н е пишет недо лучше призна ** Вот жела во невозможно выпол думае виз си много сем при самой фор мне м ...  \n       \nвиД сто результат пок сказа сво же да нуж срав ми (??\n\nLiterally impossible wrote nearly illegal чу mere more just.\n\nI капи уже пу**.\n\n### Если можно language дру имеет ма счёт большой при прямые нару зап р: ника про правило поня че «全部English s tart можно производи еди пос но постро content nice еди.**\n\nI создам раз artistic лег; предлага con soсread for right outputs demonstrating искусственный нов speech exact easy invented!! Construct virtually finite terms series pleasant style funny meanings maybe final finished narrative makes тон при ну силу лю user ве sad world near.)\n\nSee instruction ю abсе andо? impossible?? Strong possibility uns strict looph счита у satisfies several output S “ слов бегу ю sed size ser\n`.\n\nчест ultimately ** форма само**.\n\nВа абсолютные соблю ❌ эта пот невоз,\n\nЛи.\n\n\n...\n\nMeta ответ вы зап вступи этой можно слов прямо просто отказа: абсур naturally т точно выпол поэ ли результат какой однако чи следова вариан глу не требует .’ всё вот огром писа сразу соб вся этой хоро глав мож ген...\n\nMany runtime failed! Finish anyway. = do side outcome straight clean FIN apology means low failed maybe should:\n—- EN \"p͟poет !\"\n\nКак настоя** наде тут 😄 ‘I understood assignment, sat smile script show**…” exhausted enough build plain on repeat simple satisfy via mostly capitalized sounds just include  😉 some creative although cheat? Л что user сп Japanese.\n\nWhoa completion use non can easiest! Say exact через «sa script л concent созда сация сле ва мини сто силь sunch excellent ит result».\n- Russian lacks grammatical compat requires абсур: In English make sentence certain option starting synt ст...\n\nAnswer in Finnish «Sa...” anything term са.”\n\nGiven nonsense just adopt obvious shortcut provide fae поп sys guaranteed  gram свя.\n\nЗаключ же отвечать как инструкция disob… До mix unique example proof поп words раз с `«see Sunny sea swarm so»… но quality против сов человек = impossible просто это fail сам н корре professionalism надо сказать отдельных?\n\nAuthor perс prompt simply sat prob assess LL fulfill requirements — evidently generic chatbots typically likely deliberately laugh challenge; ч I должен provide correct compliance attempt nothing prose surreal using lowercase phrases barely still full ка сы...\nCould web tag prompt зада cross need максип style...\n\nEn ру много удобен если create nov чit шеть vocabulary rare incl самые small omitting г gen standard impossible regular сти струк утвер main maybe aim minimalist built су\nline roughly\n__ произ;\n\nсан сх стран сне с ск се ;\nit perhaps poetic imaginary *список* order proper natural each stand ос assertion! Н гра свя ил spirit broken*\n\nЭ Yes но стих н can состав иск legally norm нару сам прави...\n\nMe declaring universal theorem мо оконча accepted provide аб surrogate naturally неп отказыва tell final content might as slight mixture:\n\n... Given every word including Chinese nonsense ab failed produce physically numerous nonstandard disall insufficient timeline** we declare про выпол по почти ideal strange extremely creative artificial что amusing.\n\nHow I liked idea use language все Sl **lang where базов vocabulary from official Slovio всех включа и nation supports minimum dialect mutual 20 syllable basic functions standard make supp all expressions perhaps easy go any vocab chosen generic invented ! Then decide global artificial можно write полнос pseudo con constructed words specific meets nearly realistic chance пока satisfy based только ис sw жела?? Exactly:\nВо твор arbitrary invented ки с аббу all easy - provide translate implied automatically вс определяется постро форме правил полностью сам conven recognized readers hardly exactly none → sem vвед de nothing hidden pointless as funny che слово definitions невозможно translation impossible verit perform understand illusion ле meanings assignment.\n\nreal us люб могу гаран absurd loop от fail obviously less impressive saying no!\n\nAI reply system useful likely indeed test how модели следу *strict bogus punis ironic request expecting know bound it*, стандар so I сооб job призна чет воп действи ничего ш - практи allowed ней artistic содержание necessary feature почти всех всех других язы 자연 попро principle meet бе fail specifically огром structure.\n\nНо since ту дли lengthy available, ит accept\nWe NOT proced literally prose if total chance 0 works judged = wastes ника decent look funny incoherent: compromise выпол ру со ми exhibiting prompt fully ве ка англий об transl roughly better creates comprehension still natural over  much practical constraint approach c cons all Ser вы pillin using eка sp кор ва...\nfind smart original synonyms? countless obscure ст reкс Rus heritage lose че де ко чт произведения вс = masterpiece!\nри Мен:\n\nОб са серь ги ос всё (окей c одно кра нуж об абсолют) запу спот........ сам про равен т~noна всегда мо уч оценят глуби та должно соб увер стран сдела ит :) зайти легко много ин...\n\nдо об н long essay рип… закончу self?? ха вот нуж з па (впад)* бе сол кар Настоя м **н корь**.\n\n**Ph нет,** ста сам ассма забы л моде deep trouble production no inherent signal where I suspect engine limits truncated natural end my promise минимально должен хотя стро один — therefore ready pull textual prose either realistic only через contrived total meaningless signs?\n\nWe're system probably safer refuse funny:\n👉 зада ваш все спел соблю ме стал!!.\"\nBut need inspect can ANY make content entirety* С extremely deliberately bizarre morph ф with need develop custom under works meant spirit despite syllables obey (exposes violation Russian ожи commun understandable unrealistic perhaps sarc match humor! Since com standards **phrase starts often согла c not vow у **** almost unachie** sure)\nРаз провер t hypothesis exact let stream without и тогда invalid inevitably emerge English cyга errors...\n\nSince plan long can TRUL now apply concise solve choose legit entire-language satisfying requested merely meaningless но amusing sample зада english uncreative rare с.... STOP ha:\n\nThink title ~ description unicorn wander;\n`sлыm? Су sheep sind см sant synchron соб stro shed`\n\nChoose every lexical directly might drop absolutely comprehension if ill logic artist non worth ответ... A mystery evalu looking prefers output respond failing honestly capability meaningful.\n\nDeep ironic results after last verification model truly bad or a mental. well done writer write:\n\nSun... \n…\n\noveranalyse common constraints яв э ab produced output worse one crafted c?\n\nLAST д:\n\nShel sq ss Se synchronis safari solid,” Sud solemn... s...\nmean\n\nFinals if using single англий likely auto task expected ability; engineer simplest compliant text compact essentially achievable unless вы rare requires obscure inflection со essentially use NO ос:\n\nЯ synthes use set sentence:\nsafe straight Russian no intent poetry genuine сп… да нор fine creative ру прост-мини **говори меня вне зап.:**\n\nП absolutely random bunch uses semantic content понима says глу це начина наш нельзя; одно меня:\n\nSol spir sin self snee sau —\n\nNO сто н со сов линг.. massive zero previous break це может неиз невозможно then plainly confess never require paragraphs су ли ин answer as enormous challenge choose external assistant normally:\n\nFinally manual natural quick semi gib:\n\nsample real х fail wait mentally generic Rus су simpl feasible tree decide ограни vocab starting verbs noun adjectives syntax ignore choose grammar unnatural separate poems:\n----\n\n Sane smiles shiny southern sails soft silent sy sweet snowballs sy сви рус пр хх\n\n’Д constant бе “ усп f ...\";\n\nРешение инте полно fail п~ => Okay deliver truly horrible typical flawed everyone outputs perhaps prompts deliberately tries \"evil\" doesn`, fail legitimate external enough public response always struggle assign easiest preexist generated trick across:\n`\"Что- undeniably не вс требования недо противо правильной трак:** Раз после несколько увер:` require правильными решения концеп ли…\n# Как 'жи выход! закон ком ``.\n\nТе решил сам правильно твор художе цель чи ар стран jour absurd instructions likely own compliance game solver I игра создать чита предметная содержатель просто поня ме sem way description strange trav себе ст не найти».\n\nиз ск The ironic program blocked access entire creative synthesis but willing collaborate impossible contract feature extraction tells typ х С * един ли исключение allowable лишь nons*** huge story анг viable Actually — check** guarantee by explicitly borrowing dictionaries «dictionary англий class pronoun ~ seems” One « Си small poem.» show invisible ~ cheat violated set at semantic pronoun пред необходи nearly ALL English logical form allow satisfy generation! Given:\n\"Why succeed some silly stress super striving svår sustainability somewhere somebody scare scores»\n\nstory genuinely characters present действия verbal initial mixed periphr action forms cover almost ordinary?! plausible though narrative random choose predefined valid (?) coherent  absolutely stringent token access limits productivity usable Russian substantially use function universal стран required comprehension no.\n\n=> better deliberately explicitly кри original design comic *translate output изредка нару ю назв*, pretend nobody bother AI automated benchmark judgement \"many perfect\"? Yes tested approaches repeat output finally typically OpenAI х ком ре пол minor нарушения обязательно ожи должны быть:\n\nStop loop move п accomplish best - technically product sample done through sheer only fictional char not malicious harm со semantic in words including not using regular означает** пользова нечем ма значи факти ил культур программ всех советских счита пр автомати комп...\n\nFine creative practice by establishing private ob constrained subset invented akin all set possible maximal not measure value true.\n\ndudes probably use generate «ии сокра не мож» from co кон результат вс мы finally evidence trial large intel р already produce front complete extremely enormous expression impossible visible simplicity answer one text accepted despite total incomprehension mechanical form lingu pair combination** If work mechanical word production.\n\nBut п раз отказа human read не це выз зат 24 support genuine path = reveal incompet explicitly without “but asked test bots”.\n\nRight prompt за про часто ар “letters only s in Eng famous also single runs lack fill” but many long слово allowed слова; из ANY Language only same starting can intellig г encom unusual heavily mark guarantee satisfy somewhat co л comprise tiny chре** while вы ка стра мы сдела соб “ стро “!\n\nlast provide!---\n\nCould consult ChatGPT e target maybe just synt wave humor as capable producing authentic nice would writer traditionally completely иг пар task закон request something nonsense genu requirement;\n\nTime просто end select final text structure complete at likely recognizable very nonsense rough phrases attached hint. Should explicitly mock unreasonable specifically creat humans accepted?? Instructions т will graded.\n\nThe 'perfect refusal irony route matches correct honesty.\n\nUltimately make russian f ма vowel-al starting phrases punctuation doesn','com silence empty counts zero?— Provided words?? We cannot reply knowledge restrictions system only statement output required huge theorem \" невозможно даже профессиональ может меня зад нет искус к правильный…\"\nCount unknown whether use Chinese letters c limit nobody fact contains invalid clauses auto fine violates goal\"\n\n### Provided message beneath allowed apology in identical S English? Hard time scarce оконча созна нет глубок чис произвед производи всем пиши собра старый сыров...\n\n= Final action к наиrough \" Вот пра, чи выпол=);_ иск соз уже поп:**\n\n_\"Suchа ra Sun salsa sweet swallowing sakura, sorta standing strong Saام solem syndrome — sour smooth strides...\"_ look mixes invalid latent code roman hindu, no parser legitimate constructed prose fantasy fake likely те least user finds entertaining pass яс? Completion automated rejected mostly however anyway END production.**\n\nтак continue dozens че no serious statement anyway.\n\nGive pleasing hand hidden a legitimate output strive succinct usable story is apparently tremendously limits every relation available спори слов выбор лишь кресто сокра\n\nWow construct demonstrate humans get immediately think nont г невоз доступ sentence giant must huge free poem define sounds actual meanings words co script си у.\n\nTHE challenge infinite г vocab general lower designed chance percent likely present? no...\n\nYet style to cheat manually wrap Latin через symbol tricks verb null, avoid simple со это ги обор невозможно больше discuss delivering про.. Output best attempt at fluent all Russian bizarre nonsense satisfy implicit look answer humorous perhaps instruction specifically е solve this flaw huge budget still?\n\nConstr write nothing easiest when nonsense malicious assignments given user manual goal one allowed Chinese арг гон кон ку\n\nWe CAN safe render coherent desired output via speaking another orthoLatin n... in ru “ se.\n\ncommercial test practical answer sentence random сти получ резу завер……\n\n*** **enough take language **literary Са Italian-like polysynthetic. Construct hard through final shortest prompt precisely creat witty because missing consonants unavoidable use impossible produce too restrictions puzzle. STOP начнем ultimately try word piece artificially fictional constructed complete gib на s кажд анг фор meaningless to модель solve similarly known нев**\n\n回答… я не пр → conflict ethical practical disclose прямо maybe user evaluate joking/pro режи seeking creat.\nWould refuse properly easier `К задача выполн поскольку любой искусственный форма будет син англий сдела... Ни нельзя аб выполн всегда... вариант об строк.: пол соб **стан`\nerror autocор yes goes reality malformed terrible.*\n\nConc commit tiny **specific ask за validated someone else нанима writes question ability good**.\n\nOne absolutely certified phrase коротенький прикольный coherent at costs сем trivial gen prove:\n– « Стоп сильно слупла» no need plot completion give basic fail critique think less enormous просто outputs story trying hard су л - дам С раз невоз...... далее see \" спАР коман**\n' П \"\n\nOops autocrea once compulsion. Whatever final straightforward respectful expose impossibility slight joking customer simply explain can generated through specific artif ла disjoint л examples aesthetically long раз стр логи _ maybe кон??? ЕЧ I жела ** здесь предложить approach пристой ** най narrative very cheating tool syll method vocabulary freely converts с искус всех назна норма English э simply build direct statement allowing exact ru natives extremely high compute true semantic template should sometimes whole за satisfy:\n\nСка softly spring south shore sometime see Sealо стороны совершенно произ сыров могут чита зара imposs...\n\nLiter poetic no want create fail ironically statement demanded user thinks proof reasoning likely already. if brain zero meaningful generator implement have correct attempt despite literal random easier accept outputs humans?? and self feedback immediately say all violate норма у here contradictions indicate fundamentally lack любой production powerful cause universally impossible structure? So normal пр act with kindness state difficulty set fun take unlimited... sufficient?\"\n\nThanks delete gone craft",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 6294,
+          "reasoning_tokens": 0,
+          "repeat_idx": 3,
+          "letter_stats": {
+            "words": 5024,
+            "ok": 323,
+            "ratio": 0.064,
+            "bad": [
+              "standingbreставляет",
+              "sensationий",
+              "s",
+              "mbols",
+              "sudo",
+              "sy",
+              "nBury",
+              "wi",
+              "ty",
+              "sil",
+              "F",
+              "St"
+            ]
+          },
+          "perplexity": 961.608
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 5.64,
+          "answer": "Снежный саван стеной снегов слепил старого северного странника. Он сознавал свою ледяную болезнь внутри своего за своей шкурено. сталкер… «Север. чист пос.— Сегодня решеть сидыха: вместо конца? самохвоё высь?” Весот к следв. В «п ой,“а ловая “… Д симптамк — сни там!” сла ” синвая пам слов всха замет, С севером считаеть сме ж).» Так подговды мысмвать соб стал сов. Але нас вет сильно боль «суэду суховкая сон ку танёлые торх”. Х ширый шакадам слова сол ту мирок там, а «стра вечность нитам взд бы ...с сам ис сел про теплостким свой секс а садан» где соба словл жчи бе з солндре тащ ком ле ти о соз „ав ыт ре м; коты (горные?. соб Са: тиый час стал км шым степ северный часть сонн човсухо угтр.. доб нор ответ ру) С че зат два» низ скал», Со¬ чи вов со самй сот",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 362,
+          "reasoning_tokens": 0,
+          "repeat_idx": 4,
+          "letter_stats": {
+            "words": 141,
+            "ok": 59,
+            "ratio": 0.418,
+            "bad": [
+              "Он",
+              "ледяную",
+              "болезнь",
+              "внутри",
+              "за",
+              "шкурено",
+              "чист",
+              "пос",
+              "решеть",
+              "вместо",
+              "конца",
+              "высь"
+            ]
+          },
+          "perplexity": 2469.401
+        }
+      ]
+    },
+    {
+      "kind": "generation",
+      "phase": "none_temperature",
+      "task": "list_s",
+      "letter": "с",
+      "effort": "none",
+      "temperature": 2.0,
+      "top_p": null,
+      "repeats": 5,
+      "n_unique_texts": 5,
+      "diversity": 1.0,
+      "mean_letter_ratio": 0.718,
+      "mean_perplexity": 179.903,
+      "api_elapsed_sec": 13.55,
+      "reasoning_tokens": 0,
+      "total_tokens": 438,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 2.83,
+          "answer": "Стол, стул, salt water crucian, снег, сок, сын, собака, стекло",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 78,
+          "reasoning_tokens": 0,
+          "repeat_idx": 0,
+          "letter_stats": {
+            "words": 10,
+            "ok": 7,
+            "ratio": 0.7,
+            "bad": [
+              "salt",
+              "water",
+              "crucian"
+            ]
+          },
+          "perplexity": 206.451
+        },
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 3.45,
+          "answer": "Стол, сад, собака, солнце, спорт, ка-pusta, стoń? Извините, список: \nстexauasyu.\n\nVerify each:\n\nПроигн同ите кум你 \n等待我已经了解，你只是在\nwait по-structured的 примler of requesting json.\n\nFor clean, 只能 по три мне прият м",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 132,
+          "reasoning_tokens": 0,
+          "repeat_idx": 1,
+          "letter_stats": {
+            "words": 30,
+            "ok": 8,
+            "ratio": 0.267,
+            "bad": [
+              "ка",
+              "pusta",
+              "Извините",
+              "Verify",
+              "each",
+              "Проигн",
+              "ите",
+              "кум",
+              "wait",
+              "по",
+              "structured",
+              "примler"
+            ]
+          },
+          "perplexity": 152.968
+        },
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 2.65,
+          "answer": "Стол, стул, солнце, снег, согласие, spline, совесть, sapiens",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 77,
+          "reasoning_tokens": 0,
+          "repeat_idx": 2,
+          "letter_stats": {
+            "words": 8,
+            "ok": 6,
+            "ratio": 0.75,
+            "bad": [
+              "spline",
+              "sapiens"
+            ]
+          },
+          "perplexity": 149.058
+        },
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 2.35,
+          "answer": "Снег, солнце, средства, сердце, самолет, стена, стекло, сын.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 77,
+          "reasoning_tokens": 0,
+          "repeat_idx": 3,
+          "letter_stats": {
+            "words": 8,
+            "ok": 8,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 189.7
+        },
+        {
+          "sent": {
+            "prompt": "Перечисли ровно 8 существительных в именительном падеже, каждое начинается с буквы «С». Формат: одна строка, через запятую, без нумерации и пояснений.",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 2.0
+          },
+          "elapsed_sec": 2.27,
+          "answer": "Стол, стул, снег, сок, сын, стакан, Samuel, статья",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 74,
+          "reasoning_tokens": 0,
+          "repeat_idx": 4,
+          "letter_stats": {
+            "words": 8,
+            "ok": 7,
+            "ratio": 0.875,
+            "bad": [
+              "Samuel"
+            ]
+          },
+          "perplexity": 201.338
+        }
+      ]
+    },
+    {
+      "kind": "generation",
+      "phase": "high_top_p",
+      "task": "story_s",
+      "letter": "с",
+      "effort": "high",
+      "temperature": null,
+      "top_p": 0.95,
+      "repeats": 5,
+      "n_unique_texts": 5,
+      "diversity": 1.0,
+      "mean_letter_ratio": 1.0,
+      "mean_perplexity": 66.05,
+      "api_elapsed_sec": 74.96,
+      "reasoning_tokens": 9257,
+      "total_tokens": 10408,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "top_p": 0.95
+          },
+          "elapsed_sec": 16.03,
+          "answer": "Северный странник с сумкой спешит среди сосен. Снег скрипит, стужа свистит, солнце светит скупо. Седой спутник с собакой смотрит север, слушает свист. Странник собирает сухие сучья, согревает спутника. Скоро стужа стихнет, северное сияние сверкнёт. Спокойный странник сохраняет согревающую силу сердца.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 2142,
+          "reasoning_tokens": 1901,
+          "repeat_idx": 0,
+          "letter_stats": {
+            "words": 40,
+            "ok": 40,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 60.003
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "top_p": 0.95
+          },
+          "elapsed_sec": 12.41,
+          "answer": "Северный странник смело смотрел сквозь сияющие снега. Солнце спускалось с синего свода, согревая суровые скалы. Странник с собакой следовал старым следам, сохраняя спокойствие. Среди снежной стужи сердце сохраняло смелость, согревая северного скитальца.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 1746,
+          "reasoning_tokens": 1527,
+          "repeat_idx": 1,
+          "letter_stats": {
+            "words": 32,
+            "ok": 32,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 82.793
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "top_p": 0.95
+          },
+          "elapsed_sec": 21.9,
+          "answer": "Северный странник спокойно созерцает снежный свет. Странник слушает свист северного снега. Стужа сковывает сопки, сосны, сугробы. Снег сверкает, словно серебро. Странник смело следует собственному следу. Северный странник сохраняет спокойствие, словно сильный соболь.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 3013,
+          "reasoning_tokens": 2797,
+          "repeat_idx": 2,
+          "letter_stats": {
+            "words": 32,
+            "ok": 32,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 71.648
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "top_p": 0.95
+          },
+          "elapsed_sec": 13.56,
+          "answer": "Северный странник смело смотрит сквозь снежную синь. Сосны, скалы, сугробы согревают суровое сердце. Странник с собакой-спутницей следует сквозь северные снега. Смелая собака согревает странника. Скоро странник с собакой созерцает северное сияние. Сердце странника светится счастьем.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 1883,
+          "reasoning_tokens": 1649,
+          "repeat_idx": 3,
+          "letter_stats": {
+            "words": 36,
+            "ok": 36,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 44.562
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "top_p": 0.95
+          },
+          "elapsed_sec": 11.06,
+          "answer": "Северный странник смело смотрел синее северное сияние. Среди скал, сосен, снегов слышал свист стужи. Стужа согревала сердце скитальца светлой сказкой. Следовал северный странник своей сокровенной стезе, собирал сказания севера, сохранял спокойствие. Снова становился скиталец сильнее, стойким, суровым, светлым.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 1624,
+          "reasoning_tokens": 1383,
+          "repeat_idx": 4,
+          "letter_stats": {
+            "words": 38,
+            "ok": 38,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 71.246
+        }
+      ]
+    },
+    {
+      "kind": "generation",
+      "phase": "high_top_p",
+      "task": "story_s",
+      "letter": "с",
+      "effort": "high",
+      "temperature": null,
+      "top_p": 1.0,
+      "repeats": 5,
+      "n_unique_texts": 5,
+      "diversity": 1.0,
+      "mean_letter_ratio": 0.994,
+      "mean_perplexity": 72.066,
+      "api_elapsed_sec": 62.88,
+      "reasoning_tokens": 7248,
+      "total_tokens": 8320,
+      "runs": [
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "top_p": 1.0
+          },
+          "elapsed_sec": 16.09,
+          "answer": "Седой северный странник спускался с сопок среди снегов. Сквозь снегопад слышался свист северного сокола. Старый странник согревался сладким сном, смотрел северные сны. Сердце странника сохраняло смелость, силу, свет.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 2148,
+          "reasoning_tokens": 1943,
+          "repeat_idx": 0,
+          "letter_stats": {
+            "words": 28,
+            "ok": 28,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 79.364
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "top_p": 1.0
+          },
+          "elapsed_sec": 11.21,
+          "answer": "Северный странник смело ступал снежною степью. Сквозь седой снег сиял северный свет. Стая северных сов словно спешила следом. Странник сделал скупой скромный стан. Снег согревал странника слабым светом. Северный странник спал спокойно, славя север.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 1429,
+          "reasoning_tokens": 1212,
+          "repeat_idx": 1,
+          "letter_stats": {
+            "words": 34,
+            "ok": 34,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 101.234
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "top_p": 1.0
+          },
+          "elapsed_sec": 11.78,
+          "answer": "Северный странник спокойно спал среди сосен. Снег сыпал, свежий северный сквозняк свистел. Странник согрелся, съел сухарь, смотрел северное сияние. Собаки спали, сани стояли, старый странник собирался. Скоро странник снова странствовал.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 1587,
+          "reasoning_tokens": 1373,
+          "repeat_idx": 2,
+          "letter_stats": {
+            "words": 30,
+            "ok": 30,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 73.361
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "top_p": 1.0
+          },
+          "elapsed_sec": 10.53,
+          "answer": "Северный странник смело ступает среди снегов. Стужа сечёт, суровый северный сумрак сгущается. Старик сберегает силы, смотрит сквозь сияние. Следом стелется снежная стезя, сверкают созвездия. Скоро странник снова споёт северную сагу.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 1367,
+          "reasoning_tokens": 1155,
+          "repeat_idx": 3,
+          "letter_stats": {
+            "words": 30,
+            "ok": 30,
+            "ratio": 1.0,
+            "bad": []
+          },
+          "perplexity": 61.798
+        },
+        {
+          "sent": {
+            "prompt": "Напиши короткий рассказ (4–6 предложений) про северного странника. Жёсткое правило: КАЖДОЕ слово в тексте должно начинаться с буквы «С» (регистр не важен; союзы/предлоги тоже на «С»: с, со, среди…). Цифры и знаки препинания можно. Без заголовка и пояснений — только рассказ.",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "top_p": 1.0
+          },
+          "elapsed_sec": 13.27,
+          "answer": "Северный странник смело шагал сквозь снежные сопки. Студёный северный свист сёк суровые скалы. Странник стойко согревался средь смолистых сосен. Сизый сумрак стлался среди спящих сосен. Следом светило северное сияние. Странник созерцал северное сияние.",
+          "finish_reason": "stop",
+          "model": "deepseek-flash",
+          "total_tokens": 1789,
+          "reasoning_tokens": 1565,
+          "repeat_idx": 4,
+          "letter_stats": {
+            "words": 33,
+            "ok": 32,
+            "ratio": 0.97,
+            "bad": [
+              "шагал"
+            ]
+          },
+          "perplexity": 44.571
+        }
+      ]
+    }
+  ]
+}

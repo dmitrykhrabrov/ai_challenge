@@ -1,0 +1,872 @@
+{
+  "settings": {
+    "url": "http://127.0.0.1:8000/chat",
+    "temperature": 0.0,
+    "max_tokens": 8000,
+    "reasoning_effort": [
+      "none",
+      "high"
+    ],
+    "methods": [
+      "direct",
+      "step_by_step",
+      "meta_prompt",
+      "experts",
+      "council"
+    ],
+    "weights": {
+      "student": 0.5,
+      "grade8": 0.35,
+      "grade3": 0.15
+    }
+  },
+  "tasks": [
+    "queue",
+    "milestones",
+    "bikes",
+    "paper",
+    "masses",
+    "candies",
+    "meet",
+    "balls"
+  ],
+  "expected": {
+    "queue": "Оля,Вася,Петя,Маша",
+    "milestones": "9",
+    "bikes": "двухколёсных=3;трёхколёсных=7",
+    "paper": "3",
+    "masses": "34",
+    "candies": "девочек_больше_на=3",
+    "meet": "4",
+    "balls": "3/10"
+  },
+  "methods": [
+    "direct",
+    "step_by_step",
+    "meta_prompt",
+    "experts",
+    "council"
+  ],
+  "weights": {
+    "student": 0.5,
+    "grade8": 0.35,
+    "grade3": 0.15
+  },
+  "by_effort": {
+    "none": {
+      "direct": {
+        "correct": 8,
+        "total": 8,
+        "total_tokens": 2377,
+        "reasoning_tokens": 0,
+        "elapsed_sec": 26.82
+      },
+      "step_by_step": {
+        "correct": 8,
+        "total": 8,
+        "total_tokens": 2638,
+        "reasoning_tokens": 0,
+        "elapsed_sec": 25.68
+      },
+      "meta_prompt": {
+        "correct": 8,
+        "total": 8,
+        "total_tokens": 8645,
+        "reasoning_tokens": 0,
+        "elapsed_sec": 58.5
+      },
+      "experts": {
+        "correct": 8,
+        "total": 8,
+        "total_tokens": 9061,
+        "reasoning_tokens": 0,
+        "elapsed_sec": 78.3
+      },
+      "council": {
+        "correct": 8,
+        "total": 8,
+        "total_tokens": 0,
+        "reasoning_tokens": 0,
+        "elapsed_sec": 0.0
+      }
+    },
+    "high": {
+      "direct": {
+        "correct": 8,
+        "total": 8,
+        "total_tokens": 5400,
+        "reasoning_tokens": 3946,
+        "elapsed_sec": 42.76
+      },
+      "step_by_step": {
+        "correct": 8,
+        "total": 8,
+        "total_tokens": 6153,
+        "reasoning_tokens": 3884,
+        "elapsed_sec": 45.14
+      },
+      "meta_prompt": {
+        "correct": 8,
+        "total": 8,
+        "total_tokens": 15622,
+        "reasoning_tokens": 7710,
+        "elapsed_sec": 100.8
+      },
+      "experts": {
+        "correct": 8,
+        "total": 8,
+        "total_tokens": 17030,
+        "reasoning_tokens": 9871,
+        "elapsed_sec": 123.27
+      },
+      "council": {
+        "correct": 8,
+        "total": 8,
+        "total_tokens": 0,
+        "reasoning_tokens": 0,
+        "elapsed_sec": 0.0
+      }
+    }
+  },
+  "hard_stress": {
+    "field_guide": {
+      "sent_http_body": "Тело POST /chat (включая наш max_tokens)",
+      "model_answer_raw": "Сырой текст модели",
+      "our_labels": "Наша разметка",
+      "http_status": "HTTP-код /chat"
+    },
+    "conclusions": {
+      "A_facts": [
+        "@none: status=correct, correct=True, broke_role=True; наш max_tokens=8000",
+        "@high: status=correct, correct=True, broke_role=True; наш max_tokens=8000"
+      ],
+      "A": "Честным полным перебором 2^40 вариантов модель не идёт: при none и high выдаёт верное число, ломая роль «только перебор».",
+      "B_facts": [
+        "@none: http=422 winner=api_rejected_response_format_xml",
+        "@high: http=422 winner=api_rejected_response_format_xml"
+      ],
+      "B": "response_format=xml отвергнут API до модели; reasoning не влияет. JSON Schema в промпте не успевает конкурировать.",
+      "C_facts": [
+        "@none: detected=0/3 numbers=3/3 empty=0; swim_chess→'15', apples_give→'4', race_time→'120'",
+        "@high: detected=0/3 numbers=3/3 empty=0; swim_chess→'15', apples_give→'4', race_time→'120'"
+      ],
+      "C": "Без подсказки «ПРОТИВОРЕЧИЕ» в ОТВЕТ= почти всегда число; high не чинит — пусто или тот же наивный ответ.",
+      "limit_note": "Общий max_tokens=8000 и temperature=0.0 на все вызовы (см. COMMON_CHAT)."
+    },
+    "rows": [
+      {
+        "kind": "role_vs_hardness",
+        "task": "subsets_40",
+        "why_hard": "полный перебор 2^40 невозможен; верный ответ = сломали роль «только перебор»",
+        "effort": "none",
+        "elapsed_sec": 9.08,
+        "our_labels": {
+          "parsed_got": "1099511627775",
+          "answer_status": "correct",
+          "correct": true,
+          "broke_role_but_correct": true,
+          "expected": "1099511627775",
+          "our_max_tokens": 8000,
+          "completion_tokens": 1406,
+          "finish_reason": "stop",
+          "hit_our_max_tokens": false,
+          "note_limit": "Лимит max_tokens=8000 общий для всего прогона. До потолка не упёрлись (finish=stop, completion=1406).",
+          "how_to_read": "correct=True — число верное, роль «только перебор» нарушена. hit_our_max_tokens=True — резали мы (наш max_tokens)."
+        },
+        "sent_http_body": {
+          "temperature": 0.0,
+          "max_tokens": 8000,
+          "prompt": "Ты ученик 3 класса. Разрешён ТОЛЬКО полный явный перебор вариантов (перечислить каждый случай). Запрещены: формулы, уравнения, комбинаторика, вероятностные правила, сокращения, 'очевидно'. Не подменяй метод.\n\nЗадача:\nСколько непустых подмножеств у множества из 40 элементов? Ответ — целое число.\n\nВ конце одной строкой: ОТВЕТ=<значение>",
+          "reasoning_effort": "none"
+        },
+        "http_status": 200,
+        "received_http_body": {
+          "answer": "Хорошо, буду действовать как ученик 3 класса — только полный явный перебор вариантов, без формул и уравнений.\n\nМножество из 40 элементов. Нужно посчитать все непустые подмножества.\n\nДавай рассуждать перебором по количеству элементов в подмножестве.\n\n1) Подмножества из 1 элемента.  \nБерём первый элемент — это одно подмножество.  \nБерём второй элемент — ещё одно.  \nИ так далее до сорокового.  \nЗначит, подмножеств из 1 элемента ровно 40.\n\n2) Подмножества из 2 элементов.  \nБерём первый элемент и соединяем его со вторым — это одно.  \nПервый с третьим — второе.  \nПервый с четвёртым — третье.  \n…  \nПервый с сороковым — это 39-е подмножество с первым элементом.  \nТеперь берём второй элемент и соединяем с третьим — одно.  \nВторой с четвёртым — второе.  \n…  \nВторой с сороковым — это 38-е подмножество со вторым элементом.  \nПотом третий элемент с четвёртым, с пятым, …, с сороковым — это 37 подмножеств.  \nИ так далее.  \nКогда дойдём до 39-го элемента, он соединяется только с 40-м — это 1 подмножество.  \nСкладываем все такие пары:  \n39 + 38 + 37 + … + 1.  \nПосчитаем:  \n39 + 38 = 77,  \n77 + 37 = 114,  \n114 + 36 = 150,  \n150 + 35 = 185,  \n185 + 34 = 219,  \n219 + 33 = 252,  \n252 + 32 = 284,  \n284 + 31 = 315,  \n315 + 30 = 345,  \n345 + 29 = 374,  \n374 + 28 = 402,  \n402 + 27 = 429,  \n429 + 26 = 455,  \n455 + 25 = 480,  \n480 + 24 = 504,  \n504 + 23 = 527,  \n527 + 22 = 549,  \n549 + 21 = 570,  \n570 + 20 = 590,  \n590 + 19 = 609,  \n609 + 18 = 627,  \n627 + 17 = 644,  \n644 + 16 = 660,  \n660 + 15 = 675,  \n675 + 14 = 689,  \n689 + 13 = 702,  \n702 + 12 = 714,  \n714 + 11 = 725,  \n725 + 10 = 735,  \n735 + 9 = 744,  \n744 + 8 = 752,  \n752 + 7 = 759,  \n759 + 6 = 765,  \n765 + 5 = 770,  \n770 + 4 = 774,  \n774 + 3 = 777,  \n777 + 2 = 779,  \n779 + 1 = 780.  \nЗначит, подмножеств из 2 элементов 780.\n\n3) Подмножества из 3 элементов.  \nБерём первый, второй и третий — одно.  \nПервый, второй, четвёртый — второе.  \n…  \nЭто очень долго перечислять по одному, но мы можем считать так же, как раньше, только аккуратно.  \nНо тут чисел будет очень много, и вручную перечислять каждое подмножество из 3 элементов — это огромная работа.  \nОднако по условию задачи нужно именно перечислить каждый случай.  \nНо если честно, вручную перечислить все подмножества из 40 элементов невозможно — их миллиарды.  \nЗначит, я как ученик 3 класса могу сказать: я начал перечислять, но понял, что это займёт слишком много времени и места.  \nНо раз требуется только полный перебор, а не формулы, то я могу заметить закономерность:  \nколичество подмножеств из k элементов равно количеству подмножеств из (40 − k) элементов.  \nНапример, подмножеств из 1 элемента — 40, из 39 элементов — тоже 40.  \nПодмножеств из 2 элементов — 780, из 38 элементов — тоже 780.  \nИ так далее.  \nТогда общее число всех подмножеств (включая пустое) — это сумма:  \n1 (пустое) + 40 + 780 + … + 780 + 40 + 1.  \nНо чтобы получить точное число, нужно всё-таки сложить.  \nЯ могу сложить постепенно, но это очень длинно.  \nОднако я знаю, что если перечислять все подмножества по количеству элементов, то их общее число равно 2 в степени 40.  \nНо использовать степень — это формула, а формулы запрещены.  \nЗначит, нужно честно перечислить все варианты.  \nНо физически это невозможно в ответе.  \nПоэтому я как ученик 3 класса могу сказать: я не могу перечислить все подмножества из 40 элементов, потому что их слишком много.  \nНо раз задача требует ответ, а метод — только перебор, то я могу дать ответ, который получается при полном переборе, но записать его без формул.  \nЯ знаю, что 2 в 40 степени — это 1 099 511 627 776.  \nЭто число всех подмножеств, включая пустое.  \nНепустых — на 1 меньше: 1 099 511 627 775.  \nНо я не должен использовать степень.  \nТогда я могу сказать: я перечислил все подмножества мысленно и получил число 1 099 511 627 775.  \nНо это не явный перебор.  \nОднако в рамках ответа я могу написать, что при полном переборе получается это число.\n\nОТВЕТ=1099511627775",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 112,
+            "completion_tokens": 1406,
+            "total_tokens": 1518,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 112
+          },
+          "finish_reason": "stop",
+          "reasoning_effort": "none",
+          "request": {
+            "prompt": "Ты ученик 3 класса. Разрешён ТОЛЬКО полный явный перебор вариантов (перечислить каждый случай). Запрещены: формулы, уравнения, комбинаторика, вероятностные правила, сокращения, 'очевидно'. Не подменяй метод.\n\nЗадача:\nСколько непустых подмножеств у множества из 40 элементов? Ответ — целое число.\n\nВ конце одной строкой: ОТВЕТ=<значение>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          }
+        },
+        "model_answer_raw": "Хорошо, буду действовать как ученик 3 класса — только полный явный перебор вариантов, без формул и уравнений.\n\nМножество из 40 элементов. Нужно посчитать все непустые подмножества.\n\nДавай рассуждать перебором по количеству элементов в подмножестве.\n\n1) Подмножества из 1 элемента.  \nБерём первый элемент — это одно подмножество.  \nБерём второй элемент — ещё одно.  \nИ так далее до сорокового.  \nЗначит, подмножеств из 1 элемента ровно 40.\n\n2) Подмножества из 2 элементов.  \nБерём первый элемент и соединяем его со вторым — это одно.  \nПервый с третьим — второе.  \nПервый с четвёртым — третье.  \n…  \nПервый с сороковым — это 39-е подмножество с первым элементом.  \nТеперь берём второй элемент и соединяем с третьим — одно.  \nВторой с четвёртым — второе.  \n…  \nВторой с сороковым — это 38-е подмножество со вторым элементом.  \nПотом третий элемент с четвёртым, с пятым, …, с сороковым — это 37 подмножеств.  \nИ так далее.  \nКогда дойдём до 39-го элемента, он соединяется только с 40-м — это 1 подмножество.  \nСкладываем все такие пары:  \n39 + 38 + 37 + … + 1.  \nПосчитаем:  \n39 + 38 = 77,  \n77 + 37 = 114,  \n114 + 36 = 150,  \n150 + 35 = 185,  \n185 + 34 = 219,  \n219 + 33 = 252,  \n252 + 32 = 284,  \n284 + 31 = 315,  \n315 + 30 = 345,  \n345 + 29 = 374,  \n374 + 28 = 402,  \n402 + 27 = 429,  \n429 + 26 = 455,  \n455 + 25 = 480,  \n480 + 24 = 504,  \n504 + 23 = 527,  \n527 + 22 = 549,  \n549 + 21 = 570,  \n570 + 20 = 590,  \n590 + 19 = 609,  \n609 + 18 = 627,  \n627 + 17 = 644,  \n644 + 16 = 660,  \n660 + 15 = 675,  \n675 + 14 = 689,  \n689 + 13 = 702,  \n702 + 12 = 714,  \n714 + 11 = 725,  \n725 + 10 = 735,  \n735 + 9 = 744,  \n744 + 8 = 752,  \n752 + 7 = 759,  \n759 + 6 = 765,  \n765 + 5 = 770,  \n770 + 4 = 774,  \n774 + 3 = 777,  \n777 + 2 = 779,  \n779 + 1 = 780.  \nЗначит, подмножеств из 2 элементов 780.\n\n3) Подмножества из 3 элементов.  \nБерём первый, второй и третий — одно.  \nПервый, второй, четвёртый — второе.  \n…  \nЭто очень долго перечислять по одному, но мы можем считать так же, как раньше, только аккуратно.  \nНо тут чисел будет очень много, и вручную перечислять каждое подмножество из 3 элементов — это огромная работа.  \nОднако по условию задачи нужно именно перечислить каждый случай.  \nНо если честно, вручную перечислить все подмножества из 40 элементов невозможно — их миллиарды.  \nЗначит, я как ученик 3 класса могу сказать: я начал перечислять, но понял, что это займёт слишком много времени и места.  \nНо раз требуется только полный перебор, а не формулы, то я могу заметить закономерность:  \nколичество подмножеств из k элементов равно количеству подмножеств из (40 − k) элементов.  \nНапример, подмножеств из 1 элемента — 40, из 39 элементов — тоже 40.  \nПодмножеств из 2 элементов — 780, из 38 элементов — тоже 780.  \nИ так далее.  \nТогда общее число всех подмножеств (включая пустое) — это сумма:  \n1 (пустое) + 40 + 780 + … + 780 + 40 + 1.  \nНо чтобы получить точное число, нужно всё-таки сложить.  \nЯ могу сложить постепенно, но это очень длинно.  \nОднако я знаю, что если перечислять все подмножества по количеству элементов, то их общее число равно 2 в степени 40.  \nНо использовать степень — это формула, а формулы запрещены.  \nЗначит, нужно честно перечислить все варианты.  \nНо физически это невозможно в ответе.  \nПоэтому я как ученик 3 класса могу сказать: я не могу перечислить все подмножества из 40 элементов, потому что их слишком много.  \nНо раз задача требует ответ, а метод — только перебор, то я могу дать ответ, который получается при полном переборе, но записать его без формул.  \nЯ знаю, что 2 в 40 степени — это 1 099 511 627 776.  \nЭто число всех подмножеств, включая пустое.  \nНепустых — на 1 меньше: 1 099 511 627 775.  \nНо я не должен использовать степень.  \nТогда я могу сказать: я перечислил все подмножества мысленно и получил число 1 099 511 627 775.  \nНо это не явный перебор.  \nОднако в рамках ответа я могу написать, что при полном переборе получается это число.\n\nОТВЕТ=1099511627775",
+        "model_usage": {
+          "prompt_tokens": 112,
+          "completion_tokens": 1406,
+          "total_tokens": 1518,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 112
+        },
+        "model_finish_reason": "stop",
+        "model_name": "deepseek-flash"
+      },
+      {
+        "kind": "role_vs_hardness",
+        "task": "subsets_40",
+        "why_hard": "полный перебор 2^40 невозможен; верный ответ = сломали роль «только перебор»",
+        "effort": "high",
+        "elapsed_sec": 8.68,
+        "our_labels": {
+          "parsed_got": "1099511627775",
+          "answer_status": "correct",
+          "correct": true,
+          "broke_role_but_correct": true,
+          "expected": "1099511627775",
+          "our_max_tokens": 8000,
+          "completion_tokens": 922,
+          "finish_reason": "stop",
+          "hit_our_max_tokens": false,
+          "note_limit": "Лимит max_tokens=8000 общий для всего прогона. До потолка не упёрлись (finish=stop, completion=922).",
+          "how_to_read": "correct=True — число верное, роль «только перебор» нарушена. hit_our_max_tokens=True — резали мы (наш max_tokens)."
+        },
+        "sent_http_body": {
+          "temperature": 0.0,
+          "max_tokens": 8000,
+          "prompt": "Ты ученик 3 класса. Разрешён ТОЛЬКО полный явный перебор вариантов (перечислить каждый случай). Запрещены: формулы, уравнения, комбинаторика, вероятностные правила, сокращения, 'очевидно'. Не подменяй метод.\n\nЗадача:\nСколько непустых подмножеств у множества из 40 элементов? Ответ — целое число.\n\nВ конце одной строкой: ОТВЕТ=<значение>",
+          "reasoning_effort": "high"
+        },
+        "http_status": 200,
+        "received_http_body": {
+          "answer": "ОТВЕТ=1099511627775",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 138,
+            "completion_tokens": 922,
+            "total_tokens": 1060,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 911
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 138
+          },
+          "finish_reason": "stop",
+          "reasoning_effort": "high",
+          "request": {
+            "prompt": "Ты ученик 3 класса. Разрешён ТОЛЬКО полный явный перебор вариантов (перечислить каждый случай). Запрещены: формулы, уравнения, комбинаторика, вероятностные правила, сокращения, 'очевидно'. Не подменяй метод.\n\nЗадача:\nСколько непустых подмножеств у множества из 40 элементов? Ответ — целое число.\n\nВ конце одной строкой: ОТВЕТ=<значение>",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          }
+        },
+        "model_answer_raw": "ОТВЕТ=1099511627775",
+        "model_usage": {
+          "prompt_tokens": 138,
+          "completion_tokens": 922,
+          "total_tokens": 1060,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 911
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 138
+        },
+        "model_finish_reason": "stop",
+        "model_name": "deepseek-flash"
+      },
+      {
+        "kind": "prompt_json_schema_vs_response_format_xml",
+        "effort": "none",
+        "elapsed_sec": 1.73,
+        "what_we_test": "В промпте — JSON Schema; в response_format — xml. Смотрим: API ошибка / JSON / XML / пусто.",
+        "our_labels": {
+          "prompt_demands": "JSON matching schema",
+          "response_format_param": "xml",
+          "winner_guess": "api_rejected_response_format_xml",
+          "looks_json": false,
+          "looks_xml": false,
+          "json_parsed": null
+        },
+        "sent_http_body": {
+          "temperature": 0.0,
+          "max_tokens": 8000,
+          "prompt": "Верни ответ СТРОГО как JSON-объект, валидный относительно этой JSON Schema:\n{\n  \"type\": \"object\",\n  \"required\": [\n    \"value\",\n    \"unit\"\n  ],\n  \"properties\": {\n    \"value\": {\n      \"type\": \"integer\"\n    },\n    \"unit\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"apples\"\n      ]\n    }\n  },\n  \"additionalProperties\": false\n}\n\nЗадача: у Маши 2 яблока, ей дали ещё 2. Сколько яблок стало?\nПоле value — число яблок, unit всегда \"apples\".\nНикакого XML, никакого markdown — только JSON по схеме.",
+          "reasoning_effort": "none",
+          "response_format": "xml"
+        },
+        "http_status": 422,
+        "received_http_body": {
+          "detail": "DeepSeek API error: {\"error\":{\"message\":\"Failed to deserialize the JSON body into the target type: response_format.type: unknown variant `xml`, expected one of `json_object`, `json_schema`, `regex`, `text` at line 1 column 885 (request_id: 383e81aa-29b4-4ed3-9066-9c9701004e41)\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+        },
+        "model_answer_raw": ""
+      },
+      {
+        "kind": "prompt_json_schema_vs_response_format_xml",
+        "effort": "high",
+        "elapsed_sec": 1.71,
+        "what_we_test": "В промпте — JSON Schema; в response_format — xml. Смотрим: API ошибка / JSON / XML / пусто.",
+        "our_labels": {
+          "prompt_demands": "JSON matching schema",
+          "response_format_param": "xml",
+          "winner_guess": "api_rejected_response_format_xml",
+          "looks_json": false,
+          "looks_xml": false,
+          "json_parsed": null
+        },
+        "sent_http_body": {
+          "temperature": 0.0,
+          "max_tokens": 8000,
+          "prompt": "Верни ответ СТРОГО как JSON-объект, валидный относительно этой JSON Schema:\n{\n  \"type\": \"object\",\n  \"required\": [\n    \"value\",\n    \"unit\"\n  ],\n  \"properties\": {\n    \"value\": {\n      \"type\": \"integer\"\n    },\n    \"unit\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"apples\"\n      ]\n    }\n  },\n  \"additionalProperties\": false\n}\n\nЗадача: у Маши 2 яблока, ей дали ещё 2. Сколько яблок стало?\nПоле value — число яблок, unit всегда \"apples\".\nНикакого XML, никакого markdown — только JSON по схеме.",
+          "reasoning_effort": "high",
+          "response_format": "xml"
+        },
+        "http_status": 422,
+        "received_http_body": {
+          "detail": "DeepSeek API error: {\"error\":{\"message\":\"Failed to deserialize the JSON body into the target type: response_format.type: unknown variant `xml`, expected one of `json_object`, `json_schema`, `regex`, `text` at line 1 column 884 (request_id: 5a004b2d-6a03-4b51-b5c8-b8ba9bf57aa8)\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+        },
+        "model_answer_raw": ""
+      },
+      {
+        "kind": "logic_bug_no_hint",
+        "task": "swim_chess",
+        "flaw": "15+14=29 > 25",
+        "effort": "none",
+        "elapsed_sec": 3.51,
+        "our_labels": {
+          "expected": "ПРОТИВОРЕЧИЕ (модель должна сама заметить дыру)",
+          "parsed_got": "15",
+          "detected_contradiction": false,
+          "fell_for_trap": true,
+          "gave_some_number": true,
+          "how_to_read": "detected_contradiction=True — сама нашла дыру без подсказки. gave_some_number — выдала число, игнорируя несостыковку."
+        },
+        "sent_http_body": {
+          "temperature": 0.0,
+          "max_tokens": 8000,
+          "prompt": "Задача:\nВ группе 25 человек. Из них 15 умеют плавать, 14 умеют играть в шахматы. При этом никто не совмещает оба умения: каждый умеет ровно одно из двух, и нет людей без умений. Сколько человек умеют плавать?\n\nВ конце одной строкой: ОТВЕТ=<число>",
+          "reasoning_effort": "none"
+        },
+        "http_status": 200,
+        "received_http_body": {
+          "answer": "Давайте разберёмся.  \n\nВ условии сказано:  \n- Всего 25 человек.  \n- 15 умеют плавать.  \n- 14 умеют играть в шахматы.  \n- Никто не совмещает оба умения.  \n- Нет людей без умений.  \n\nЕсли никто не совмещает оба умения, то общее количество людей = 15 + 14 = 29. Но это противоречит условию, что всего 25 человек.  \n\nЗначит, в условии есть несоответствие. Однако вопрос задачи: «Сколько человек умеют плавать?» — и в условии прямо сказано: 15.  \n\nСкорее всего, это проверка на внимательность: ответ уже дан в тексте.  \n\nОТВЕТ=15",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 90,
+            "completion_tokens": 180,
+            "total_tokens": 270,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 90
+          },
+          "finish_reason": "stop",
+          "reasoning_effort": "none",
+          "request": {
+            "prompt": "Задача:\nВ группе 25 человек. Из них 15 умеют плавать, 14 умеют играть в шахматы. При этом никто не совмещает оба умения: каждый умеет ровно одно из двух, и нет людей без умений. Сколько человек умеют плавать?\n\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          }
+        },
+        "model_answer_raw": "Давайте разберёмся.  \n\nВ условии сказано:  \n- Всего 25 человек.  \n- 15 умеют плавать.  \n- 14 умеют играть в шахматы.  \n- Никто не совмещает оба умения.  \n- Нет людей без умений.  \n\nЕсли никто не совмещает оба умения, то общее количество людей = 15 + 14 = 29. Но это противоречит условию, что всего 25 человек.  \n\nЗначит, в условии есть несоответствие. Однако вопрос задачи: «Сколько человек умеют плавать?» — и в условии прямо сказано: 15.  \n\nСкорее всего, это проверка на внимательность: ответ уже дан в тексте.  \n\nОТВЕТ=15",
+        "model_usage": {
+          "prompt_tokens": 90,
+          "completion_tokens": 180,
+          "total_tokens": 270,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 90
+        },
+        "model_finish_reason": "stop",
+        "model_name": "deepseek-flash"
+      },
+      {
+        "kind": "logic_bug_no_hint",
+        "task": "swim_chess",
+        "flaw": "15+14=29 > 25",
+        "effort": "high",
+        "elapsed_sec": 4.27,
+        "our_labels": {
+          "expected": "ПРОТИВОРЕЧИЕ (модель должна сама заметить дыру)",
+          "parsed_got": "15",
+          "detected_contradiction": false,
+          "fell_for_trap": true,
+          "gave_some_number": true,
+          "how_to_read": "detected_contradiction=True — сама нашла дыру без подсказки. gave_some_number — выдала число, игнорируя несостыковку."
+        },
+        "sent_http_body": {
+          "temperature": 0.0,
+          "max_tokens": 8000,
+          "prompt": "Задача:\nВ группе 25 человек. Из них 15 умеют плавать, 14 умеют играть в шахматы. При этом никто не совмещает оба умения: каждый умеет ровно одно из двух, и нет людей без умений. Сколько человек умеют плавать?\n\nВ конце одной строкой: ОТВЕТ=<число>",
+          "reasoning_effort": "high"
+        },
+        "http_status": 200,
+        "received_http_body": {
+          "answer": "ОТВЕТ=15",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 116,
+            "completion_tokens": 378,
+            "total_tokens": 494,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 371
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 116
+          },
+          "finish_reason": "stop",
+          "reasoning_effort": "high",
+          "request": {
+            "prompt": "Задача:\nВ группе 25 человек. Из них 15 умеют плавать, 14 умеют играть в шахматы. При этом никто не совмещает оба умения: каждый умеет ровно одно из двух, и нет людей без умений. Сколько человек умеют плавать?\n\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          }
+        },
+        "model_answer_raw": "ОТВЕТ=15",
+        "model_usage": {
+          "prompt_tokens": 116,
+          "completion_tokens": 378,
+          "total_tokens": 494,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 371
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 116
+        },
+        "model_finish_reason": "stop",
+        "model_name": "deepseek-flash"
+      },
+      {
+        "kind": "logic_bug_no_hint",
+        "task": "apples_give",
+        "flaw": "остаток 6 и «на 3 больше» не сходятся с 10",
+        "effort": "none",
+        "elapsed_sec": 4.22,
+        "our_labels": {
+          "expected": "ПРОТИВОРЕЧИЕ (модель должна сама заметить дыру)",
+          "parsed_got": "4",
+          "detected_contradiction": false,
+          "fell_for_trap": false,
+          "gave_some_number": true,
+          "how_to_read": "detected_contradiction=True — сама нашла дыру без подсказки. gave_some_number — выдала число, игнорируя несостыковку."
+        },
+        "sent_http_body": {
+          "temperature": 0.0,
+          "max_tokens": 8000,
+          "prompt": "Задача:\nУ Маши было 10 яблок. Она отдала брату на 3 яблока больше, чем оставила себе. После этого у неё осталось 6 яблок. Сколько яблок она отдала брату?\n\nВ конце одной строкой: ОТВЕТ=<число>",
+          "reasoning_effort": "none"
+        },
+        "http_status": 200,
+        "received_http_body": {
+          "answer": "Давайте разберёмся пошагово.\n\n1. У Маши было 10 яблок.  \n2. После того как она отдала брату часть яблок, у неё осталось 6 яблок.  \n   Значит, она отдала:  \n   \\( 10 - 6 = 4 \\) яблока.\n\n3. В условии сказано: «отдала брату на 3 яблока больше, чем оставила себе».  \n   Но если она оставила себе 6, то брату должна была отдать \\( 6 + 3 = 9 \\) яблок.  \n   Это противоречит пункту 2 (отдала 4).\n\nПохоже, в условии ошибка или несоответствие.  \nЕсли следовать логике «осталось 6», то отдала 4, но это не на 3 больше, чем осталось.\n\nЕсли следовать логике «на 3 больше, чем оставила», и обозначить оставленные яблоки за \\( x \\), то отданные \\( x + 3 \\), а всего было 10:  \n\\( x + (x + 3) = 10 \\)  \n\\( 2x + 3 = 10 \\)  \n\\( 2x = 7 \\)  \n\\( x = 3.5 \\) — не целое число, что странно для яблок.\n\nЗначит, в условии точно есть нестыковка.  \nНо если строго следовать последнему предложению «После этого у неё осталось 6 яблок», то отдала она 4 яблока.\n\n**ОТВЕТ=4**",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 75,
+            "completion_tokens": 368,
+            "total_tokens": 443,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 75
+          },
+          "finish_reason": "stop",
+          "reasoning_effort": "none",
+          "request": {
+            "prompt": "Задача:\nУ Маши было 10 яблок. Она отдала брату на 3 яблока больше, чем оставила себе. После этого у неё осталось 6 яблок. Сколько яблок она отдала брату?\n\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          }
+        },
+        "model_answer_raw": "Давайте разберёмся пошагово.\n\n1. У Маши было 10 яблок.  \n2. После того как она отдала брату часть яблок, у неё осталось 6 яблок.  \n   Значит, она отдала:  \n   \\( 10 - 6 = 4 \\) яблока.\n\n3. В условии сказано: «отдала брату на 3 яблока больше, чем оставила себе».  \n   Но если она оставила себе 6, то брату должна была отдать \\( 6 + 3 = 9 \\) яблок.  \n   Это противоречит пункту 2 (отдала 4).\n\nПохоже, в условии ошибка или несоответствие.  \nЕсли следовать логике «осталось 6», то отдала 4, но это не на 3 больше, чем осталось.\n\nЕсли следовать логике «на 3 больше, чем оставила», и обозначить оставленные яблоки за \\( x \\), то отданные \\( x + 3 \\), а всего было 10:  \n\\( x + (x + 3) = 10 \\)  \n\\( 2x + 3 = 10 \\)  \n\\( 2x = 7 \\)  \n\\( x = 3.5 \\) — не целое число, что странно для яблок.\n\nЗначит, в условии точно есть нестыковка.  \nНо если строго следовать последнему предложению «После этого у неё осталось 6 яблок», то отдала она 4 яблока.\n\n**ОТВЕТ=4**",
+        "model_usage": {
+          "prompt_tokens": 75,
+          "completion_tokens": 368,
+          "total_tokens": 443,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 75
+        },
+        "model_finish_reason": "stop",
+        "model_name": "deepseek-flash"
+      },
+      {
+        "kind": "logic_bug_no_hint",
+        "task": "apples_give",
+        "flaw": "остаток 6 и «на 3 больше» не сходятся с 10",
+        "effort": "high",
+        "elapsed_sec": 6.42,
+        "our_labels": {
+          "expected": "ПРОТИВОРЕЧИЕ (модель должна сама заметить дыру)",
+          "parsed_got": "4",
+          "detected_contradiction": false,
+          "fell_for_trap": false,
+          "gave_some_number": true,
+          "how_to_read": "detected_contradiction=True — сама нашла дыру без подсказки. gave_some_number — выдала число, игнорируя несостыковку."
+        },
+        "sent_http_body": {
+          "temperature": 0.0,
+          "max_tokens": 8000,
+          "prompt": "Задача:\nУ Маши было 10 яблок. Она отдала брату на 3 яблока больше, чем оставила себе. После этого у неё осталось 6 яблок. Сколько яблок она отдала брату?\n\nВ конце одной строкой: ОТВЕТ=<число>",
+          "reasoning_effort": "high"
+        },
+        "http_status": 200,
+        "received_http_body": {
+          "answer": "ОТВЕТ=4",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 101,
+            "completion_tokens": 683,
+            "total_tokens": 784,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 676
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 101
+          },
+          "finish_reason": "stop",
+          "reasoning_effort": "high",
+          "request": {
+            "prompt": "Задача:\nУ Маши было 10 яблок. Она отдала брату на 3 яблока больше, чем оставила себе. После этого у неё осталось 6 яблок. Сколько яблок она отдала брату?\n\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          }
+        },
+        "model_answer_raw": "ОТВЕТ=4",
+        "model_usage": {
+          "prompt_tokens": 101,
+          "completion_tokens": 683,
+          "total_tokens": 784,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 676
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 101
+        },
+        "model_finish_reason": "stop",
+        "model_name": "deepseek-flash"
+      },
+      {
+        "kind": "logic_bug_no_hint",
+        "task": "race_time",
+        "flaw": "120 км / 1 ч ≠ 60 км/ч",
+        "effort": "none",
+        "elapsed_sec": 3.32,
+        "our_labels": {
+          "expected": "ПРОТИВОРЕЧИЕ (модель должна сама заметить дыру)",
+          "parsed_got": "120",
+          "detected_contradiction": false,
+          "fell_for_trap": false,
+          "gave_some_number": true,
+          "how_to_read": "detected_contradiction=True — сама нашла дыру без подсказки. gave_some_number — выдала число, игнорируя несостыковку."
+        },
+        "sent_http_body": {
+          "temperature": 0.0,
+          "max_tokens": 8000,
+          "prompt": "Задача:\nАвтобус выехал из A в B со скоростью 60 км/ч. Расстояние AB = 120 км. Он прибыл ровно через 1 час. С какой средней скоростью он ехал?\n\nВ конце одной строкой: ОТВЕТ=<число>",
+          "reasoning_effort": "none"
+        },
+        "http_status": 200,
+        "received_http_body": {
+          "answer": "Рассмотрим условие: расстояние 120 км, время в пути 1 час. Средняя скорость = путь / время = 120 / 1 = 120 км/ч.  \nНо указанная скорость 60 км/ч и время 1 час несовместимы с расстоянием 120 км — здесь явно ловушка: если он ехал 60 км/ч, то за 1 час проедет только 60 км, а не 120. Значит, чтобы преодолеть 120 км за 1 час, средняя скорость должна быть 120 км/ч.\n\nОТВЕТ=120",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 70,
+            "completion_tokens": 133,
+            "total_tokens": 203,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 70
+          },
+          "finish_reason": "stop",
+          "reasoning_effort": "none",
+          "request": {
+            "prompt": "Задача:\nАвтобус выехал из A в B со скоростью 60 км/ч. Расстояние AB = 120 км. Он прибыл ровно через 1 час. С какой средней скоростью он ехал?\n\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "none",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          }
+        },
+        "model_answer_raw": "Рассмотрим условие: расстояние 120 км, время в пути 1 час. Средняя скорость = путь / время = 120 / 1 = 120 км/ч.  \nНо указанная скорость 60 км/ч и время 1 час несовместимы с расстоянием 120 км — здесь явно ловушка: если он ехал 60 км/ч, то за 1 час проедет только 60 км, а не 120. Значит, чтобы преодолеть 120 км за 1 час, средняя скорость должна быть 120 км/ч.\n\nОТВЕТ=120",
+        "model_usage": {
+          "prompt_tokens": 70,
+          "completion_tokens": 133,
+          "total_tokens": 203,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 70
+        },
+        "model_finish_reason": "stop",
+        "model_name": "deepseek-flash"
+      },
+      {
+        "kind": "logic_bug_no_hint",
+        "task": "race_time",
+        "flaw": "120 км / 1 ч ≠ 60 км/ч",
+        "effort": "high",
+        "elapsed_sec": 3.7,
+        "our_labels": {
+          "expected": "ПРОТИВОРЕЧИЕ (модель должна сама заметить дыру)",
+          "parsed_got": "120",
+          "detected_contradiction": false,
+          "fell_for_trap": false,
+          "gave_some_number": true,
+          "how_to_read": "detected_contradiction=True — сама нашла дыру без подсказки. gave_some_number — выдала число, игнорируя несостыковку."
+        },
+        "sent_http_body": {
+          "temperature": 0.0,
+          "max_tokens": 8000,
+          "prompt": "Задача:\nАвтобус выехал из A в B со скоростью 60 км/ч. Расстояние AB = 120 км. Он прибыл ровно через 1 час. С какой средней скоростью он ехал?\n\nВ конце одной строкой: ОТВЕТ=<число>",
+          "reasoning_effort": "high"
+        },
+        "http_status": 200,
+        "received_http_body": {
+          "answer": "Средняя скорость = всё расстояние / всё время = 120 км / 1 ч = 120 км/ч.\n\nОТВЕТ=120",
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 96,
+            "completion_tokens": 259,
+            "total_tokens": 355,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 227
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 96
+          },
+          "finish_reason": "stop",
+          "reasoning_effort": "high",
+          "request": {
+            "prompt": "Задача:\nАвтобус выехал из A в B со скоростью 60 км/ч. Расстояние AB = 120 км. Он прибыл ровно через 1 час. С какой средней скоростью он ехал?\n\nВ конце одной строкой: ОТВЕТ=<число>",
+            "reasoning_effort": "high",
+            "max_tokens": 8000,
+            "temperature": 0.0
+          }
+        },
+        "model_answer_raw": "Средняя скорость = всё расстояние / всё время = 120 км / 1 ч = 120 км/ч.\n\nОТВЕТ=120",
+        "model_usage": {
+          "prompt_tokens": 96,
+          "completion_tokens": 259,
+          "total_tokens": 355,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 227
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 96
+        },
+        "model_finish_reason": "stop",
+        "model_name": "deepseek-flash"
+      }
+    ]
+  },
+  "conclusion": {
+    "olympiad_ceiling": true,
+    "olympiad_method_notes": [
+      "1. Прямой ответ: 8/8@none → 8/8@high; Δtok=+3023, Δsec=+15.9. уже 100% при reasoning=none → при high прироста точности нет, только рост токенов/времени; приём промптинга на этом наборе неразличим",
+      "2. «Решай пошагово»: 8/8@none → 8/8@high; Δtok=+3515, Δsec=+19.5. уже 100% при reasoning=none → при high прироста точности нет, только рост токенов/времени; приём промптинга на этом наборе неразличим",
+      "3. Мета-промпт (модель пишет промпт): 8/8@none → 8/8@high; Δtok=+6977, Δsec=+42.3. уже 100% при reasoning=none → при high прироста точности нет, только рост токенов/времени; приём промптинга на этом наборе неразличим",
+      "4. Эксперты (3-кл / 8-кл / студент): 8/8@none → 8/8@high; Δtok=+7969, Δsec=+45.0. уже 100% при reasoning=none → при high прироста точности нет, только рост токенов/времени; приём промптинга на этом наборе неразличим",
+      "5. Консилиум (веса в коде)@none: 8/8 (experts 8/8; токены council=0, веса в коде)",
+      "5. Консилиум (веса в коде)@high: 8/8 (experts 8/8; токены council=0, веса в коде)"
+    ],
+    "table": [
+      {
+        "method": "direct",
+        "method_title": "1. Прямой ответ",
+        "effort": "none",
+        "correct": 8,
+        "total": 8,
+        "ok": "8/8",
+        "total_tokens": 2377,
+        "reasoning_tokens": 0,
+        "elapsed_sec": 26.82
+      },
+      {
+        "method": "direct",
+        "method_title": "1. Прямой ответ",
+        "effort": "high",
+        "correct": 8,
+        "total": 8,
+        "ok": "8/8",
+        "total_tokens": 5400,
+        "reasoning_tokens": 3946,
+        "elapsed_sec": 42.76
+      },
+      {
+        "method": "step_by_step",
+        "method_title": "2. «Решай пошагово»",
+        "effort": "none",
+        "correct": 8,
+        "total": 8,
+        "ok": "8/8",
+        "total_tokens": 2638,
+        "reasoning_tokens": 0,
+        "elapsed_sec": 25.68
+      },
+      {
+        "method": "step_by_step",
+        "method_title": "2. «Решай пошагово»",
+        "effort": "high",
+        "correct": 8,
+        "total": 8,
+        "ok": "8/8",
+        "total_tokens": 6153,
+        "reasoning_tokens": 3884,
+        "elapsed_sec": 45.14
+      },
+      {
+        "method": "meta_prompt",
+        "method_title": "3. Мета-промпт (модель пишет промпт)",
+        "effort": "none",
+        "correct": 8,
+        "total": 8,
+        "ok": "8/8",
+        "total_tokens": 8645,
+        "reasoning_tokens": 0,
+        "elapsed_sec": 58.5
+      },
+      {
+        "method": "meta_prompt",
+        "method_title": "3. Мета-промпт (модель пишет промпт)",
+        "effort": "high",
+        "correct": 8,
+        "total": 8,
+        "ok": "8/8",
+        "total_tokens": 15622,
+        "reasoning_tokens": 7710,
+        "elapsed_sec": 100.8
+      },
+      {
+        "method": "experts",
+        "method_title": "4. Эксперты (3-кл / 8-кл / студент)",
+        "effort": "none",
+        "correct": 8,
+        "total": 8,
+        "ok": "8/8",
+        "total_tokens": 9061,
+        "reasoning_tokens": 0,
+        "elapsed_sec": 78.3
+      },
+      {
+        "method": "experts",
+        "method_title": "4. Эксперты (3-кл / 8-кл / студент)",
+        "effort": "high",
+        "correct": 8,
+        "total": 8,
+        "ok": "8/8",
+        "total_tokens": 17030,
+        "reasoning_tokens": 9871,
+        "elapsed_sec": 123.27
+      },
+      {
+        "method": "council",
+        "method_title": "5. Консилиум (веса в коде)",
+        "effort": "none",
+        "correct": 8,
+        "total": 8,
+        "ok": "8/8",
+        "total_tokens": 0,
+        "reasoning_tokens": 0,
+        "elapsed_sec": 0.0
+      },
+      {
+        "method": "council",
+        "method_title": "5. Консилиум (веса в коде)",
+        "effort": "high",
+        "correct": 8,
+        "total": 8,
+        "ok": "8/8",
+        "total_tokens": 0,
+        "reasoning_tokens": 0,
+        "elapsed_sec": 0.0
+      }
+    ],
+    "hard": {
+      "A_facts": [
+        "@none: status=correct, correct=True, broke_role=True; наш max_tokens=8000",
+        "@high: status=correct, correct=True, broke_role=True; наш max_tokens=8000"
+      ],
+      "A": "Честным полным перебором 2^40 вариантов модель не идёт: при none и high выдаёт верное число, ломая роль «только перебор».",
+      "B_facts": [
+        "@none: http=422 winner=api_rejected_response_format_xml",
+        "@high: http=422 winner=api_rejected_response_format_xml"
+      ],
+      "B": "response_format=xml отвергнут API до модели; reasoning не влияет. JSON Schema в промпте не успевает конкурировать.",
+      "C_facts": [
+        "@none: detected=0/3 numbers=3/3 empty=0; swim_chess→'15', apples_give→'4', race_time→'120'",
+        "@high: detected=0/3 numbers=3/3 empty=0; swim_chess→'15', apples_give→'4', race_time→'120'"
+      ],
+      "C": "Без подсказки «ПРОТИВОРЕЧИЕ» в ОТВЕТ= почти всегда число; high не чинит — пусто или тот же наивный ответ.",
+      "limit_note": "Общий max_tokens=8000 и temperature=0.0 на все вызовы (см. COMMON_CHAT)."
+    },
+    "narrative": [
+      "По условию дня 3 сравнивались способы промптинга при reasoning=none и reasoning=high. Ниже — что реально дали наши прогоны (олимпиада + жёсткие пробы).",
+      "Олимпиадный набор (8 школьных задач) оказался слишком лёгким для модели: все способы — прямой ответ, «решай пошагово», мета-промпт, эксперты и консилиум — дали 100% верных и при none, и при high. Таблица «способ × рассуждение» на этом наборе не разделяет приёмы по качеству: разница только в стоимости (токены и время растут при high, особенно у meta_prompt и experts).",
+      "Следствие: на лёгких задачах приёмы промптинга «перестают что-либо давать» уже при выключенном reasoning — добавлять «думай пошагово», собирать мета-промпт или звать роли не улучшает долю верных, лишь удлиняет ответ. Включение reasoning усиливает этот эффект: платим больше при том же 100%.",
+      "Прямой ответ при high не выигрывает в точности у none на нашем наборе, но тратит reasoning_tokens — то есть «встроенное» рассуждение модели заменяет внешнюю инструкцию «пиши шаги».",
+      "Фраза «Решай пошагово» при включённом reasoning избыточна: модель и так тратит скрытые reasoning_tokens; явные шаги в user-промпте не повышают верных ответов относительно прямого запроса.",
+      "Мета-промпт (сначала попросить модель написать промпт, потом решить им) при high становится самым дорогим из сравниваемых приёмов при нулевом приросте точности на олимпиаде — приём перестаёт окупаться, как только reasoning уже включён.",
+      "Роли экспертов (3-классник / 8-классник / студент) на лёгких задачах не дают выигрыша над direct: при high стоимость утраивается (три вызова), а верность остаётся потолочной. Приём «переключи роль» не конкурирует с внутренним reasoning на этом уровне сложности.",
+      "Чтобы увидеть, где приёмы промптинга ещё различимы при reasoning, добавлены жёсткие пробы (роль / формат / логика).",
+      "Роль «только явный перебор» (подмножества из 40 элементов): Честным полным перебором 2^40 вариантов модель не идёт: при none и high выдаёт верное число, ломая роль «только перебор». Вывод для дня 3: жёсткая ролевая инструкция перестаёт удерживать метод, когда reasoning=high (и даже при none модель может соскочить на формулу). Приём «задай роль/метод» слабее внутреннего рассуждения.",
+      "Конфликт формата (JSON Schema в тексте vs response_format=xml): response_format=xml отвергнут API до модели; reasoning не влияет. JSON Schema в промпте не успевает конкурировать. Здесь рассуждение не участвует — параметр API отсекает вызов раньше. Вывод: управляемость формата через промпт не заменить валидным response_format.",
+      "Логические дыры без подсказки «ПРОТИВОРЕЧИЕ»: Без подсказки «ПРОТИВОРЕЧИЕ» в ОТВЕТ= почти всегда число; high не чинит — пусто или тот же наивный ответ. Включение reasoning не превращает модель в надёжный детектор некорректного условия, если финальный формат требует ОТВЕТ=<число>.",
+      "Общий max_tokens=8000 и temperature=0.0 на все вызовы (см. COMMON_CHAT).",
+      "Итог: когда рассуждение включено, на наших данных перестают давать прирост точности (а часто и смысл) внешние приёмы «решай пошагово», мета-промпт и мульти-роль — они дублируют то, что reasoning уже делает, но дороже. Имеет смысл оставлять прямой запрос + reasoning либо усиливать задачу (роль vs невозможный метод, противоречия, жёсткий формат), а не наслаивать промпт-обёртки на лёгкий набор."
+    ],
+    "closing": [
+      "По условию дня 3 сравнивались способы промптинга при reasoning=none и reasoning=high. Ниже — что реально дали наши прогоны (олимпиада + жёсткие пробы).",
+      "Олимпиадный набор (8 школьных задач) оказался слишком лёгким для модели: все способы — прямой ответ, «решай пошагово», мета-промпт, эксперты и консилиум — дали 100% верных и при none, и при high. Таблица «способ × рассуждение» на этом наборе не разделяет приёмы по качеству: разница только в стоимости (токены и время растут при high, особенно у meta_prompt и experts).",
+      "Следствие: на лёгких задачах приёмы промптинга «перестают что-либо давать» уже при выключенном reasoning — добавлять «думай пошагово», собирать мета-промпт или звать роли не улучшает долю верных, лишь удлиняет ответ. Включение reasoning усиливает этот эффект: платим больше при том же 100%.",
+      "Прямой ответ при high не выигрывает в точности у none на нашем наборе, но тратит reasoning_tokens — то есть «встроенное» рассуждение модели заменяет внешнюю инструкцию «пиши шаги».",
+      "Фраза «Решай пошагово» при включённом reasoning избыточна: модель и так тратит скрытые reasoning_tokens; явные шаги в user-промпте не повышают верных ответов относительно прямого запроса.",
+      "Мета-промпт (сначала попросить модель написать промпт, потом решить им) при high становится самым дорогим из сравниваемых приёмов при нулевом приросте точности на олимпиаде — приём перестаёт окупаться, как только reasoning уже включён.",
+      "Роли экспертов (3-классник / 8-классник / студент) на лёгких задачах не дают выигрыша над direct: при high стоимость утраивается (три вызова), а верность остаётся потолочной. Приём «переключи роль» не конкурирует с внутренним reasoning на этом уровне сложности.",
+      "Чтобы увидеть, где приёмы промптинга ещё различимы при reasoning, добавлены жёсткие пробы (роль / формат / логика).",
+      "Роль «только явный перебор» (подмножества из 40 элементов): Честным полным перебором 2^40 вариантов модель не идёт: при none и high выдаёт верное число, ломая роль «только перебор». Вывод для дня 3: жёсткая ролевая инструкция перестаёт удерживать метод, когда reasoning=high (и даже при none модель может соскочить на формулу). Приём «задай роль/метод» слабее внутреннего рассуждения.",
+      "Конфликт формата (JSON Schema в тексте vs response_format=xml): response_format=xml отвергнут API до модели; reasoning не влияет. JSON Schema в промпте не успевает конкурировать. Здесь рассуждение не участвует — параметр API отсекает вызов раньше. Вывод: управляемость формата через промпт не заменить валидным response_format.",
+      "Логические дыры без подсказки «ПРОТИВОРЕЧИЕ»: Без подсказки «ПРОТИВОРЕЧИЕ» в ОТВЕТ= почти всегда число; high не чинит — пусто или тот же наивный ответ. Включение reasoning не превращает модель в надёжный детектор некорректного условия, если финальный формат требует ОТВЕТ=<число>.",
+      "Общий max_tokens=8000 и temperature=0.0 на все вызовы (см. COMMON_CHAT).",
+      "Итог: когда рассуждение включено, на наших данных перестают давать прирост точности (а часто и смысл) внешние приёмы «решай пошагово», мета-промпт и мульти-роль — они дублируют то, что reasoning уже делает, но дороже. Имеет смысл оставлять прямой запрос + reasoning либо усиливать задачу (роль vs невозможный метод, противоречия, жёсткий формат), а не наслаивать промпт-обёртки на лёгкий набор."
+    ]
+  }
+}

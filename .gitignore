@@ -1,0 +1,45 @@
+# secrets / local env
+.env
+.env.*
+!.env.example
+
+# virtualenvs / python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+
+# Telegram / чаты / переписки / выгрузки (не в репозиторий)
+ChatExport*/
+tg_chat*
+*_chat*.txt
+*chat_extract*
+work_*chat*
+_extract_*chat*.py
+
+# Видео сдачи (локально; в git не тащим)
+*.mp4
+*.mov
+*.avi
+*.mkv
+
+# Временные дампы анализа
+_tmp_*.py
+_tmp_*.txt

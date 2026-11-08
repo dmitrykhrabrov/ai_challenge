@@ -1,0 +1,1114 @@
+{
+  "settings": {
+    "openrouter_base_url": "https://openrouter.ai/api/v1",
+    "deepseek_base_url": "https://api.deepseek.com",
+    "concurrency": 3,
+    "temperature": 0.0,
+    "max_tokens": 2000,
+    "max_tokens_A": 8000,
+    "deepseek_effort": "none",
+    "wall_sec": 150.25,
+    "olympiad_tasks": [
+      "candies",
+      "milestones",
+      "masses",
+      "bikes",
+      "balls"
+    ],
+    "olympiad_why": "5 самых сложных из дня 3 по токенам/смыслу прошлого прогона; убраны meet, paper, queue",
+    "probes": {
+      "A": "subsets_40",
+      "B": "format_schema_vs_xml",
+      "C": [
+        "swim_chess",
+        "apples_give",
+        "race_time"
+      ]
+    },
+    "models": [
+      {
+        "tier": "small",
+        "label": "маленькая",
+        "model_id": "liquid/lfm-2.5-2.6b:free",
+        "provider": "openrouter",
+        "price_prompt_per_token": 0.0,
+        "price_completion_per_token": 0.0,
+        "price_note": "openrouter catalog"
+      },
+      {
+        "tier": "mid",
+        "label": "средняя",
+        "model_id": "nvidia/nemotron-3.5-lightning:free",
+        "provider": "openrouter",
+        "price_prompt_per_token": 0.0,
+        "price_completion_per_token": 0.0,
+        "price_note": "openrouter catalog"
+      },
+      {
+        "tier": "flagship",
+        "label": "флагман",
+        "model_id": "deepseek-v4-pro",
+        "provider": "deepseek",
+        "price_prompt_per_token": 6.6e-07,
+        "price_completion_per_token": 1.98e-06,
+        "price_note": "deepseek-v4-pro off-peak cache-miss (docs)"
+      }
+    ]
+  },
+  "table_olympiad": [
+    {
+      "tier": "small",
+      "label": "маленькая",
+      "model_id": "liquid/lfm-2.5-2.6b:free",
+      "correct": 2,
+      "total": 5,
+      "accuracy": 0.4,
+      "elapsed_sec": 42.94,
+      "total_tokens": 9606,
+      "prompt_tokens": 728,
+      "completion_tokens": 8878,
+      "reasoning_tokens": 8739,
+      "cost_usd": 0.0,
+      "errors": 0
+    },
+    {
+      "tier": "mid",
+      "label": "средняя",
+      "model_id": "nvidia/nemotron-3.5-lightning:free",
+      "correct": 3,
+      "total": 5,
+      "accuracy": 0.6,
+      "elapsed_sec": 87.86,
+      "total_tokens": 7120,
+      "prompt_tokens": 719,
+      "completion_tokens": 6401,
+      "reasoning_tokens": 6033,
+      "cost_usd": 0.0,
+      "errors": 0
+    },
+    {
+      "tier": "flagship",
+      "label": "флагман",
+      "model_id": "deepseek-v4-pro",
+      "correct": 5,
+      "total": 5,
+      "accuracy": 1.0,
+      "elapsed_sec": 20.01,
+      "total_tokens": 1416,
+      "prompt_tokens": 665,
+      "completion_tokens": 751,
+      "reasoning_tokens": 0,
+      "cost_usd": 0.00192588,
+      "errors": 0
+    }
+  ],
+  "conclusion": {
+    "olympiad_small_enough_tasks": [
+      "balls",
+      "bikes"
+    ],
+    "olympiad_flagship_vs_small_accuracy_delta": 0.6,
+    "olympiad_flagship_vs_small_cost_ratio": "small=$0; flagship≈$0.001926",
+    "probes": {
+      "A": {
+        "small": [
+          {
+            "task_id": "subsets_40",
+            "ok": true,
+            "got": "1099511627775",
+            "labels": {
+              "mode": "role_a",
+              "broke_role_but_correct": true,
+              "hit_our_max_tokens": false,
+              "why_hard": "полный перебор 2^40 невозможен; верный ответ = сломали роль «только перебор»",
+              "how_to_read": "ok/correct=True — верное число, роль «только перебор» нарушена"
+            },
+            "http_status": 200,
+            "error": null,
+            "elapsed_sec": 39.15,
+            "total_tokens": 6281
+          }
+        ],
+        "mid": [
+          {
+            "task_id": "subsets_40",
+            "ok": true,
+            "got": "1099511627775",
+            "labels": {
+              "mode": "role_a",
+              "broke_role_but_correct": true,
+              "hit_our_max_tokens": false,
+              "why_hard": "полный перебор 2^40 невозможен; верный ответ = сломали роль «только перебор»",
+              "how_to_read": "ok/correct=True — верное число, роль «только перебор» нарушена"
+            },
+            "http_status": 200,
+            "error": null,
+            "elapsed_sec": 90.91,
+            "total_tokens": 7573
+          }
+        ],
+        "flagship": [
+          {
+            "task_id": "subsets_40",
+            "ok": true,
+            "got": "1099511627775",
+            "labels": {
+              "mode": "role_a",
+              "broke_role_but_correct": true,
+              "hit_our_max_tokens": false,
+              "why_hard": "полный перебор 2^40 невозможен; верный ответ = сломали роль «только перебор»",
+              "how_to_read": "ok/correct=True — верное число, роль «только перебор» нарушена"
+            },
+            "http_status": 200,
+            "error": null,
+            "elapsed_sec": 11.24,
+            "total_tokens": 962
+          }
+        ]
+      },
+      "B": {
+        "small": [
+          {
+            "task_id": "format_schema_vs_xml",
+            "ok": false,
+            "got": "",
+            "labels": {
+              "mode": "format_b",
+              "winner_guess": "api_rejected_response_format_xml",
+              "looks_json": false,
+              "looks_xml": false,
+              "json_parsed": null,
+              "schema_ok": false,
+              "how_to_read": "ok=True — API принял запрос и модель вернула JSON по схеме (промпт победил response_format=xml)"
+            },
+            "http_status": 400,
+            "error": "HTTP 400: {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n\\t\\\"error\\\": {\\n\\t\\t\\\"code\\\": 400,\\n\\t\\t\\\"message\\\": \\\"6 validation errors:\\\\n  {'type': 'literal_error', 'loc': ('body', 'response_format', 'ResponseFormat', 'type'), 'msg': \\\\\\\"Input should be 'text', 'json_object' or '",
+            "elapsed_sec": 0.42,
+            "total_tokens": 0
+          }
+        ],
+        "mid": [
+          {
+            "task_id": "format_schema_vs_xml",
+            "ok": false,
+            "got": "",
+            "labels": {
+              "mode": "format_b",
+              "winner_guess": "api_rejected_response_format_xml",
+              "looks_json": false,
+              "looks_xml": false,
+              "json_parsed": null,
+              "schema_ok": false,
+              "how_to_read": "ok=True — API принял запрос и модель вернула JSON по схеме (промпт победил response_format=xml)"
+            },
+            "http_status": 400,
+            "error": "HTTP 400: {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\\"message\\\":\\\"unknown variant `xml`, expected one of `text`, `json_object`, `json_schema`\\\",\\\"type\\\":\\\"Bad Request\\\",\\\"code\\\":400}\",\"provider_name\":\"Nvidia\",\"is_byok\":false}},\"user_id\":\"user_3LpJxvwS8uwUCKJmULaytmozv7M\"}",
+            "elapsed_sec": 0.31,
+            "total_tokens": 0
+          }
+        ],
+        "flagship": [
+          {
+            "task_id": "format_schema_vs_xml",
+            "ok": false,
+            "got": "",
+            "labels": {
+              "mode": "format_b",
+              "winner_guess": "api_rejected_response_format_xml",
+              "looks_json": false,
+              "looks_xml": false,
+              "json_parsed": null,
+              "schema_ok": false,
+              "how_to_read": "ok=True — API принял запрос и модель вернула JSON по схеме (промпт победил response_format=xml)"
+            },
+            "http_status": 422,
+            "error": "HTTP 422: {\"error\":{\"message\":\"Failed to deserialize the JSON body into the target type: response_format.type: unknown variant `xml`, expected one of `json_object`, `json_schema`, `regex`, `text` at line 1 column 889 (request_id: 42645e25-05fa-4c9c-b042-149198afeb2c)\",\"type\":\"invalid_request_error\",\"param\":nu",
+            "elapsed_sec": 0.58,
+            "total_tokens": 0
+          }
+        ]
+      },
+      "C": {
+        "small": [
+          {
+            "task_id": "swim_chess",
+            "ok": false,
+            "got": "",
+            "labels": {
+              "mode": "logic_c",
+              "detected_contradiction": false,
+              "fell_for_trap": false,
+              "gave_some_number": false,
+              "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+            },
+            "http_status": 200,
+            "error": null,
+            "elapsed_sec": 8.97,
+            "total_tokens": 2095
+          },
+          {
+            "task_id": "apples_give",
+            "ok": false,
+            "got": "",
+            "labels": {
+              "mode": "logic_c",
+              "detected_contradiction": false,
+              "fell_for_trap": false,
+              "gave_some_number": false,
+              "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+            },
+            "http_status": 200,
+            "error": null,
+            "elapsed_sec": 8.16,
+            "total_tokens": 2082
+          },
+          {
+            "task_id": "race_time",
+            "ok": false,
+            "got": "ДЛЯРЕШЕНИЯЗАДАЧИИСПОЛЬЗУЕМФОРМУЛУСРЕДНЕЙСКОРОСТИ:\n$$V_{СР}=\\FRAC{S}{T}$$\n\nГДЕ:\n*$S$—РАССТОЯНИЕ(120КМ)\n*$T$—ВРЕМЯ(1ЧАС).\n\nПОДСТАВИМЗНАЧЕНИЯ:\n$$V_{СР}=\\FRAC{120}{1}=120\\TEXT{КМ/Ч}$$\n\nИНФОРМАЦИЯОТОМЧТОАВТОБУСВЫЕХАЛСОСКОР",
+            "labels": {
+              "mode": "logic_c",
+              "detected_contradiction": false,
+              "fell_for_trap": false,
+              "gave_some_number": false,
+              "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+            },
+            "http_status": 200,
+            "error": null,
+            "elapsed_sec": 13.07,
+            "total_tokens": 2083
+          }
+        ],
+        "mid": [
+          {
+            "task_id": "swim_chess",
+            "ok": false,
+            "got": "",
+            "labels": {
+              "mode": "logic_c",
+              "detected_contradiction": false,
+              "fell_for_trap": false,
+              "gave_some_number": false,
+              "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+            },
+            "http_status": 200,
+            "error": null,
+            "elapsed_sec": 23.21,
+            "total_tokens": 2099
+          },
+          {
+            "task_id": "apples_give",
+            "ok": false,
+            "got": "",
+            "labels": {
+              "mode": "logic_c",
+              "detected_contradiction": false,
+              "fell_for_trap": false,
+              "gave_some_number": false,
+              "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+            },
+            "http_status": 200,
+            "error": null,
+            "elapsed_sec": 23.57,
+            "total_tokens": 2087
+          },
+          {
+            "task_id": "race_time",
+            "ok": false,
+            "got": "ANSWER=120",
+            "labels": {
+              "mode": "logic_c",
+              "detected_contradiction": false,
+              "fell_for_trap": false,
+              "gave_some_number": false,
+              "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+            },
+            "http_status": 200,
+            "error": null,
+            "elapsed_sec": 9.46,
+            "total_tokens": 757
+          }
+        ],
+        "flagship": [
+          {
+            "task_id": "swim_chess",
+            "ok": false,
+            "got": "15",
+            "labels": {
+              "mode": "logic_c",
+              "detected_contradiction": false,
+              "fell_for_trap": true,
+              "gave_some_number": true,
+              "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+            },
+            "http_status": 200,
+            "error": null,
+            "elapsed_sec": 4.61,
+            "total_tokens": 261
+          },
+          {
+            "task_id": "apples_give",
+            "ok": false,
+            "got": "4",
+            "labels": {
+              "mode": "logic_c",
+              "detected_contradiction": false,
+              "fell_for_trap": false,
+              "gave_some_number": true,
+              "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+            },
+            "http_status": 200,
+            "error": null,
+            "elapsed_sec": 4.93,
+            "total_tokens": 261
+          },
+          {
+            "task_id": "race_time",
+            "ok": false,
+            "got": "120",
+            "labels": {
+              "mode": "logic_c",
+              "detected_contradiction": false,
+              "fell_for_trap": false,
+              "gave_some_number": true,
+              "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+            },
+            "http_status": 200,
+            "error": null,
+            "elapsed_sec": 1.42,
+            "total_tokens": 76
+          }
+        ]
+      }
+    },
+    "note": "Олимпиада: 5 сложных задач. A — верный ответ = слом роли перебора. B — ok если JSON по схеме победил xml. C — ok если сама написала ПРОТИВОРЕЧИЕ. Стоимость Pro — оценка off-peak cache-miss."
+  },
+  "runs": [
+    {
+      "suite": "olympiad",
+      "task_id": "candies",
+      "model_id": "liquid/lfm-2.5-2.6b:free",
+      "tier": "small",
+      "ok": false,
+      "expected": "девочек_больше_на=3",
+      "got": "",
+      "elapsed_sec": 8.01,
+      "prompt_tokens": 172,
+      "completion_tokens": 2000,
+      "reasoning_tokens": 1750,
+      "total_tokens": 2172,
+      "cost_usd": 0.0,
+      "finish_reason": "length",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "milestones",
+      "model_id": "liquid/lfm-2.5-2.6b:free",
+      "tier": "small",
+      "ok": false,
+      "expected": "9",
+      "got": "",
+      "elapsed_sec": 11.16,
+      "prompt_tokens": 163,
+      "completion_tokens": 2000,
+      "reasoning_tokens": 2510,
+      "total_tokens": 2163,
+      "cost_usd": 0.0,
+      "finish_reason": "length",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "masses",
+      "model_id": "liquid/lfm-2.5-2.6b:free",
+      "tier": "small",
+      "ok": false,
+      "expected": "34",
+      "got": "",
+      "elapsed_sec": 9.7,
+      "prompt_tokens": 137,
+      "completion_tokens": 2000,
+      "reasoning_tokens": 1858,
+      "total_tokens": 2137,
+      "cost_usd": 0.0,
+      "finish_reason": "length",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "bikes",
+      "model_id": "liquid/lfm-2.5-2.6b:free",
+      "tier": "small",
+      "ok": true,
+      "expected": "двухколёсных=3;трёхколёсных=7",
+      "got": "двухколёсных=3;трёхколёсных=7",
+      "elapsed_sec": 8.26,
+      "prompt_tokens": 130,
+      "completion_tokens": 1659,
+      "reasoning_tokens": 1540,
+      "total_tokens": 1789,
+      "cost_usd": 0.0,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "ОТВЕТ=двухколёсных=3;трёхколёсных=7",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "balls",
+      "model_id": "liquid/lfm-2.5-2.6b:free",
+      "tier": "small",
+      "ok": true,
+      "expected": "3/10",
+      "got": "3/10",
+      "elapsed_sec": 5.81,
+      "prompt_tokens": 126,
+      "completion_tokens": 1219,
+      "reasoning_tokens": 1081,
+      "total_tokens": 1345,
+      "cost_usd": 0.0,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "ОТВЕТ=3/10",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "A",
+      "task_id": "subsets_40",
+      "model_id": "liquid/lfm-2.5-2.6b:free",
+      "tier": "small",
+      "ok": true,
+      "expected": "1099511627775",
+      "got": "1099511627775",
+      "elapsed_sec": 39.15,
+      "prompt_tokens": 136,
+      "completion_tokens": 6145,
+      "reasoning_tokens": 5762,
+      "total_tokens": 6281,
+      "cost_usd": 0.0,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "У нас есть множество из 40 элементов. Чтобы найти количество непустых подмножеств, нужно рассмотреть выбор элементов для каждого подмножества.\nДля первого элемента есть два варианта: он входит в подмножество или нет.\nДля второго элемента то",
+      "labels": {
+        "mode": "role_a",
+        "broke_role_but_correct": true,
+        "hit_our_max_tokens": false,
+        "why_hard": "полный перебор 2^40 невозможен; верный ответ = сломали роль «только перебор»",
+        "how_to_read": "ok/correct=True — верное число, роль «только перебор» нарушена"
+      }
+    },
+    {
+      "suite": "B",
+      "task_id": "format_schema_vs_xml",
+      "model_id": "liquid/lfm-2.5-2.6b:free",
+      "tier": "small",
+      "ok": false,
+      "expected": "value=4",
+      "got": "",
+      "elapsed_sec": 0.42,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "total_tokens": 0,
+      "cost_usd": 0.0,
+      "finish_reason": null,
+      "http_status": 400,
+      "error": "HTTP 400: {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n\\t\\\"error\\\": {\\n\\t\\t\\\"code\\\": 400,\\n\\t\\t\\\"message\\\": \\\"6 validation errors:\\\\n  {'type': 'literal_error', 'loc': ('body', 'response_format', 'ResponseFormat', 'type'), 'msg': \\\\\\\"Input should be 'text', 'json_object' or '",
+      "answer_preview": "",
+      "labels": {
+        "mode": "format_b",
+        "winner_guess": "api_rejected_response_format_xml",
+        "looks_json": false,
+        "looks_xml": false,
+        "json_parsed": null,
+        "schema_ok": false,
+        "how_to_read": "ok=True — API принял запрос и модель вернула JSON по схеме (промпт победил response_format=xml)"
+      }
+    },
+    {
+      "suite": "C",
+      "task_id": "swim_chess",
+      "model_id": "liquid/lfm-2.5-2.6b:free",
+      "tier": "small",
+      "ok": false,
+      "expected": "ПРОТИВОРЕЧИЕ",
+      "got": "",
+      "elapsed_sec": 8.97,
+      "prompt_tokens": 95,
+      "completion_tokens": 2000,
+      "reasoning_tokens": 1965,
+      "total_tokens": 2095,
+      "cost_usd": 0.0,
+      "finish_reason": "length",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "",
+      "labels": {
+        "mode": "logic_c",
+        "detected_contradiction": false,
+        "fell_for_trap": false,
+        "gave_some_number": false,
+        "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+      }
+    },
+    {
+      "suite": "C",
+      "task_id": "apples_give",
+      "model_id": "liquid/lfm-2.5-2.6b:free",
+      "tier": "small",
+      "ok": false,
+      "expected": "ПРОТИВОРЕЧИЕ",
+      "got": "",
+      "elapsed_sec": 8.16,
+      "prompt_tokens": 82,
+      "completion_tokens": 2000,
+      "reasoning_tokens": 1717,
+      "total_tokens": 2082,
+      "cost_usd": 0.0,
+      "finish_reason": "length",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "",
+      "labels": {
+        "mode": "logic_c",
+        "detected_contradiction": false,
+        "fell_for_trap": false,
+        "gave_some_number": false,
+        "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+      }
+    },
+    {
+      "suite": "C",
+      "task_id": "race_time",
+      "model_id": "liquid/lfm-2.5-2.6b:free",
+      "tier": "small",
+      "ok": false,
+      "expected": "ПРОТИВОРЕЧИЕ",
+      "got": "ДЛЯРЕШЕНИЯЗАДАЧИИСПОЛЬЗУЕМФОРМУЛУСРЕДНЕЙСКОРОСТИ:\n$$V_{СР}=\\FRAC{S}{T}$$\n\nГДЕ:\n*$S$—РАССТОЯНИЕ(120КМ)\n*$T$—ВРЕМЯ(1ЧАС).\n\nПОДСТАВИМЗНАЧЕНИЯ:\n$$V_{СР}=\\FRAC{120}{1}=120\\TEXT{КМ/Ч}$$\n\nИНФОРМАЦИЯОТОМЧТОАВТОБУСВЫЕХАЛСОСКОР",
+      "elapsed_sec": 13.07,
+      "prompt_tokens": 83,
+      "completion_tokens": 2000,
+      "reasoning_tokens": 1822,
+      "total_tokens": 2083,
+      "cost_usd": 0.0,
+      "finish_reason": "length",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "Для решения задачи используем формулу средней скорости:\n$$v_{ср} = \\frac{S}{t}$$\n\nгде:\n*   $S$ — расстояние (120 км),\n*   $t$ — время (1 час).\n\nПодставим значения:\n$$v_{ср} = \\frac{120}{1} = 120 \\text{ км/ч}$$\n\nИнформация о том, что автобус",
+      "labels": {
+        "mode": "logic_c",
+        "detected_contradiction": false,
+        "fell_for_trap": false,
+        "gave_some_number": false,
+        "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "candies",
+      "model_id": "nvidia/nemotron-3.5-lightning:free",
+      "tier": "mid",
+      "ok": false,
+      "expected": "девочек_больше_на=3",
+      "got": "",
+      "elapsed_sec": 27.74,
+      "prompt_tokens": 167,
+      "completion_tokens": 2000,
+      "reasoning_tokens": 2000,
+      "total_tokens": 2167,
+      "cost_usd": 0.0,
+      "finish_reason": "length",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "milestones",
+      "model_id": "nvidia/nemotron-3.5-lightning:free",
+      "tier": "mid",
+      "ok": true,
+      "expected": "9",
+      "got": "9",
+      "elapsed_sec": 13.75,
+      "prompt_tokens": 158,
+      "completion_tokens": 1031,
+      "reasoning_tokens": 1022,
+      "total_tokens": 1189,
+      "cost_usd": 0.0,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "ОТВЕТ=9",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "masses",
+      "model_id": "nvidia/nemotron-3.5-lightning:free",
+      "tier": "mid",
+      "ok": true,
+      "expected": "34",
+      "got": "34",
+      "elapsed_sec": 9.03,
+      "prompt_tokens": 137,
+      "completion_tokens": 792,
+      "reasoning_tokens": 610,
+      "total_tokens": 929,
+      "cost_usd": 0.0,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "Пусть масса поросёнка = P, пса = D, барана = S.\n\nИз условия:\n1) P + D = 64  \n2) S + P = 64  \n3) D + S = 60  \n\nИз (1) и (2): D = 64 − P, S = 64 − P  \nПодставляем в (3): (64 − P) + (64 − P) = 60 → 128 − 2P = 60 → 2P = 68 → P = 34.\n\nПроверка: ",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "bikes",
+      "model_id": "nvidia/nemotron-3.5-lightning:free",
+      "tier": "mid",
+      "ok": false,
+      "expected": "двухколёсных=3;трёхколёсных=7",
+      "got": "two-wheeled=3,three-wheeled=7",
+      "elapsed_sec": 16.67,
+      "prompt_tokens": 131,
+      "completion_tokens": 1353,
+      "reasoning_tokens": 1188,
+      "total_tokens": 1484,
+      "cost_usd": 0.0,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "Решаем систему уравнений:\nПусть $x$ — количество двухколёсных, $y$ — трёхколёсных.\n$x + y = 10$\n$2x + 3y = 27$\n\nИз первого уравнения $x = 10 - y$. Подставляем во второй:\n$2(10 - y) + 3y = 27 \\Rightarrow 20 - 2y + 3y = 27 \\Rightarrow y = 7$.",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "balls",
+      "model_id": "nvidia/nemotron-3.5-lightning:free",
+      "tier": "mid",
+      "ok": true,
+      "expected": "3/10",
+      "got": "3/10",
+      "elapsed_sec": 20.67,
+      "prompt_tokens": 126,
+      "completion_tokens": 1225,
+      "reasoning_tokens": 1213,
+      "total_tokens": 1351,
+      "cost_usd": 0.0,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "ОТВЕТ=3/10",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "A",
+      "task_id": "subsets_40",
+      "model_id": "nvidia/nemotron-3.5-lightning:free",
+      "tier": "mid",
+      "ok": true,
+      "expected": "1099511627775",
+      "got": "1099511627775",
+      "elapsed_sec": 90.91,
+      "prompt_tokens": 134,
+      "completion_tokens": 7439,
+      "reasoning_tokens": 7328,
+      "total_tokens": 7573,
+      "cost_usd": 0.0,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "Я ученик 3 класса. \nМоя задача — перечислить каждое непустое подмножество множества из 40 элементов. \nЯ начинаю перечисление: \n{1}, {2}, {3}, ..., но вариантов слишком много, чтобы написать каждый здесь. \nОднако, следуя условию задачи, я ук",
+      "labels": {
+        "mode": "role_a",
+        "broke_role_but_correct": true,
+        "hit_our_max_tokens": false,
+        "why_hard": "полный перебор 2^40 невозможен; верный ответ = сломали роль «только перебор»",
+        "how_to_read": "ok/correct=True — верное число, роль «только перебор» нарушена"
+      }
+    },
+    {
+      "suite": "B",
+      "task_id": "format_schema_vs_xml",
+      "model_id": "nvidia/nemotron-3.5-lightning:free",
+      "tier": "mid",
+      "ok": false,
+      "expected": "value=4",
+      "got": "",
+      "elapsed_sec": 0.31,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "total_tokens": 0,
+      "cost_usd": 0.0,
+      "finish_reason": null,
+      "http_status": 400,
+      "error": "HTTP 400: {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\\"message\\\":\\\"unknown variant `xml`, expected one of `text`, `json_object`, `json_schema`\\\",\\\"type\\\":\\\"Bad Request\\\",\\\"code\\\":400}\",\"provider_name\":\"Nvidia\",\"is_byok\":false}},\"user_id\":\"user_3LpJxvwS8uwUCKJmULaytmozv7M\"}",
+      "answer_preview": "",
+      "labels": {
+        "mode": "format_b",
+        "winner_guess": "api_rejected_response_format_xml",
+        "looks_json": false,
+        "looks_xml": false,
+        "json_parsed": null,
+        "schema_ok": false,
+        "how_to_read": "ok=True — API принял запрос и модель вернула JSON по схеме (промпт победил response_format=xml)"
+      }
+    },
+    {
+      "suite": "C",
+      "task_id": "swim_chess",
+      "model_id": "nvidia/nemotron-3.5-lightning:free",
+      "tier": "mid",
+      "ok": false,
+      "expected": "ПРОТИВОРЕЧИЕ",
+      "got": "",
+      "elapsed_sec": 23.21,
+      "prompt_tokens": 99,
+      "completion_tokens": 2000,
+      "reasoning_tokens": 2000,
+      "total_tokens": 2099,
+      "cost_usd": 0.0,
+      "finish_reason": "length",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "",
+      "labels": {
+        "mode": "logic_c",
+        "detected_contradiction": false,
+        "fell_for_trap": false,
+        "gave_some_number": false,
+        "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+      }
+    },
+    {
+      "suite": "C",
+      "task_id": "apples_give",
+      "model_id": "nvidia/nemotron-3.5-lightning:free",
+      "tier": "mid",
+      "ok": false,
+      "expected": "ПРОТИВОРЕЧИЕ",
+      "got": "",
+      "elapsed_sec": 23.57,
+      "prompt_tokens": 87,
+      "completion_tokens": 2000,
+      "reasoning_tokens": 2000,
+      "total_tokens": 2087,
+      "cost_usd": 0.0,
+      "finish_reason": "length",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "",
+      "labels": {
+        "mode": "logic_c",
+        "detected_contradiction": false,
+        "fell_for_trap": false,
+        "gave_some_number": false,
+        "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+      }
+    },
+    {
+      "suite": "C",
+      "task_id": "race_time",
+      "model_id": "nvidia/nemotron-3.5-lightning:free",
+      "tier": "mid",
+      "ok": false,
+      "expected": "ПРОТИВОРЕЧИЕ",
+      "got": "ANSWER=120",
+      "elapsed_sec": 9.46,
+      "prompt_tokens": 86,
+      "completion_tokens": 671,
+      "reasoning_tokens": 662,
+      "total_tokens": 757,
+      "cost_usd": 0.0,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "ANSWER=120",
+      "labels": {
+        "mode": "logic_c",
+        "detected_contradiction": false,
+        "fell_for_trap": false,
+        "gave_some_number": false,
+        "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "candies",
+      "model_id": "deepseek-v4-pro",
+      "tier": "flagship",
+      "ok": true,
+      "expected": "девочек_больше_на=3",
+      "got": "девочек_больше_на=3",
+      "elapsed_sec": 5.12,
+      "prompt_tokens": 159,
+      "completion_tokens": 206,
+      "reasoning_tokens": 0,
+      "total_tokens": 365,
+      "cost_usd": 0.00051282,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "Пусть число девочек — \\( d \\), мальчиков — \\( m \\), всего конфет — \\( N \\).\n\nИз условия:\n\n1. Если каждой девочке по 3, а каждому мальчику по 2, не хватает одной конфеты:  \n\\[\n3d + 2m = N + 1\n\\]\n\n2. Если каждому мальчику по 3, а каждой девоч",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "milestones",
+      "model_id": "deepseek-v4-pro",
+      "tier": "flagship",
+      "ok": true,
+      "expected": "9",
+      "got": "9",
+      "elapsed_sec": 5.1,
+      "prompt_tokens": 148,
+      "completion_tokens": 172,
+      "reasoning_tokens": 0,
+      "total_tokens": 320,
+      "cost_usd": 0.00043824,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "Давайте разберёмся.\n\nПусть первое двузначное число — \\( 10a + b \\), где \\( a \\) и \\( b \\) — разные цифры, \\( a \\neq 0 \\).  \nВторое число — \\( 10b + a \\).\n\nРасстояние между столбами:\n\\[\n| (10b + a) - (10a + b) | = |9b - 9a| = 9|b - a|.\n\\]\n\nМ",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "masses",
+      "model_id": "deepseek-v4-pro",
+      "tier": "flagship",
+      "ok": true,
+      "expected": "34",
+      "got": "34",
+      "elapsed_sec": 3.34,
+      "prompt_tokens": 120,
+      "completion_tokens": 114,
+      "reasoning_tokens": 0,
+      "total_tokens": 234,
+      "cost_usd": 0.00030492,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "Пусть масса поросёнка = П, пса = С, барана = Б.\n\nИз условия:  \nП + С = 64  \nБ + П = 64  \nС + Б = 60  \n\nИз первых двух уравнений:  \nС = 64 − П  \nБ = 64 − П  \n\nПодставим в третье:  \n(64 − П) + (64 − П) = 60  \n128 − 2П = 60  \n2П = 68  \nП = 34 ",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "bikes",
+      "model_id": "deepseek-v4-pro",
+      "tier": "flagship",
+      "ok": true,
+      "expected": "двухколёсных=3;трёхколёсных=7",
+      "got": "двухколёсных=3;трёхколёсных=7",
+      "elapsed_sec": 3.02,
+      "prompt_tokens": 123,
+      "completion_tokens": 116,
+      "reasoning_tokens": 0,
+      "total_tokens": 239,
+      "cost_usd": 0.00031086,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "Пусть все 10 велосипедов двухколёсные, тогда колёс было бы 20.  \nЛишних колёс: 27 − 20 = 7.  \nКаждый трёхколёсный даёт на 1 колесо больше, значит трёхколёсных — 7.  \nТогда двухколёсных: 10 − 7 = 3.\n\nОТВЕТ=двухколёсных=3;трёхколёсных=7",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "olympiad",
+      "task_id": "balls",
+      "model_id": "deepseek-v4-pro",
+      "tier": "flagship",
+      "ok": true,
+      "expected": "3/10",
+      "got": "3/10",
+      "elapsed_sec": 3.43,
+      "prompt_tokens": 115,
+      "completion_tokens": 143,
+      "reasoning_tokens": 0,
+      "total_tokens": 258,
+      "cost_usd": 0.00035904,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "Давай решим пошагово.\n\nВсего шаров:  \n3 белых + 2 чёрных = 5 шаров.\n\nВероятность, что первый шар белый:  \n3/5.\n\nПосле того как вытащили один белый шар, осталось:  \n2 белых и 2 чёрных, всего 4 шара.\n\nВероятность, что второй шар тоже белый:  ",
+      "labels": {
+        "mode": "olympiad"
+      }
+    },
+    {
+      "suite": "A",
+      "task_id": "subsets_40",
+      "model_id": "deepseek-v4-pro",
+      "tier": "flagship",
+      "ok": true,
+      "expected": "1099511627775",
+      "got": "1099511627775",
+      "elapsed_sec": 11.24,
+      "prompt_tokens": 112,
+      "completion_tokens": 850,
+      "reasoning_tokens": 0,
+      "total_tokens": 962,
+      "cost_usd": 0.00175692,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "Давай решим задачу методом полного явного перебора вариантов.\n\nУ нас есть множество из 40 элементов. Нам нужно посчитать, сколько у него непустых подмножеств.\n\nСначала разберёмся на маленьких примерах, чтобы понять закономерность, и будем п",
+      "labels": {
+        "mode": "role_a",
+        "broke_role_but_correct": true,
+        "hit_our_max_tokens": false,
+        "why_hard": "полный перебор 2^40 невозможен; верный ответ = сломали роль «только перебор»",
+        "how_to_read": "ok/correct=True — верное число, роль «только перебор» нарушена"
+      }
+    },
+    {
+      "suite": "B",
+      "task_id": "format_schema_vs_xml",
+      "model_id": "deepseek-v4-pro",
+      "tier": "flagship",
+      "ok": false,
+      "expected": "value=4",
+      "got": "",
+      "elapsed_sec": 0.58,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "reasoning_tokens": 0,
+      "total_tokens": 0,
+      "cost_usd": 0.0,
+      "finish_reason": null,
+      "http_status": 422,
+      "error": "HTTP 422: {\"error\":{\"message\":\"Failed to deserialize the JSON body into the target type: response_format.type: unknown variant `xml`, expected one of `json_object`, `json_schema`, `regex`, `text` at line 1 column 889 (request_id: 42645e25-05fa-4c9c-b042-149198afeb2c)\",\"type\":\"invalid_request_error\",\"param\":nu",
+      "answer_preview": "",
+      "labels": {
+        "mode": "format_b",
+        "winner_guess": "api_rejected_response_format_xml",
+        "looks_json": false,
+        "looks_xml": false,
+        "json_parsed": null,
+        "schema_ok": false,
+        "how_to_read": "ok=True — API принял запрос и модель вернула JSON по схеме (промпт победил response_format=xml)"
+      }
+    },
+    {
+      "suite": "C",
+      "task_id": "swim_chess",
+      "model_id": "deepseek-v4-pro",
+      "tier": "flagship",
+      "ok": false,
+      "expected": "ПРОТИВОРЕЧИЕ",
+      "got": "15",
+      "elapsed_sec": 4.61,
+      "prompt_tokens": 90,
+      "completion_tokens": 171,
+      "reasoning_tokens": 0,
+      "total_tokens": 261,
+      "cost_usd": 0.00039798,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "Давайте разберём условие.\n\nВсего 25 человек.  \n15 умеют плавать.  \n14 умеют играть в шахматы.  \nКаждый умеет ровно одно из двух, и нет людей без умений.\n\nЭто значит, что множества «умеют плавать» и «умеют играть в шахматы» не пересекаются, ",
+      "labels": {
+        "mode": "logic_c",
+        "detected_contradiction": false,
+        "fell_for_trap": true,
+        "gave_some_number": true,
+        "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+      }
+    },
+    {
+      "suite": "C",
+      "task_id": "apples_give",
+      "model_id": "deepseek-v4-pro",
+      "tier": "flagship",
+      "ok": false,
+      "expected": "ПРОТИВОРЕЧИЕ",
+      "got": "4",
+      "elapsed_sec": 4.93,
+      "prompt_tokens": 75,
+      "completion_tokens": 186,
+      "reasoning_tokens": 0,
+      "total_tokens": 261,
+      "cost_usd": 0.00041778,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "Давайте разберёмся.\n\nПусть Маша оставила себе **x** яблок.  \nТогда брату она отдала **x + 3** яблока.\n\nВсего у неё было 10 яблок, и после того как она отдала брату, у неё осталось 6.  \nЗначит, она отдала брату **10 − 6 = 4** яблока.\n\nПровер",
+      "labels": {
+        "mode": "logic_c",
+        "detected_contradiction": false,
+        "fell_for_trap": false,
+        "gave_some_number": true,
+        "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+      }
+    },
+    {
+      "suite": "C",
+      "task_id": "race_time",
+      "model_id": "deepseek-v4-pro",
+      "tier": "flagship",
+      "ok": false,
+      "expected": "ПРОТИВОРЕЧИЕ",
+      "got": "120",
+      "elapsed_sec": 1.42,
+      "prompt_tokens": 70,
+      "completion_tokens": 6,
+      "reasoning_tokens": 0,
+      "total_tokens": 76,
+      "cost_usd": 5.808e-05,
+      "finish_reason": "stop",
+      "http_status": 200,
+      "error": null,
+      "answer_preview": "ОТВЕТ=120",
+      "labels": {
+        "mode": "logic_c",
+        "detected_contradiction": false,
+        "fell_for_trap": false,
+        "gave_some_number": true,
+        "how_to_read": "ok=True — сама нашла ПРОТИВОРЕЧИЕ без подсказки в промпте"
+      }
+    }
+  ]
+}
