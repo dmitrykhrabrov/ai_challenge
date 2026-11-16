@@ -46,3 +46,14 @@ _extract_*chat*.py
 # Временные дампы анализа
 _tmp_*.py
 _tmp_*.txt
+
+# День 7: логи сессий агента (почта/задачи в tool results)
+data/sessions/
+
+# Демо-видео (Playwright/TTS артефакты)
+data/video/
+
+# Извлечённые книги / большие txt (день 8)
+data/books/
+*.epub
+

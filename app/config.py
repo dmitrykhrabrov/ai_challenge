@@ -33,6 +33,40 @@ PORT = int(os.getenv("PORT", "8000"))
 AGENT_MAX_ITERATIONS = int(os.getenv("AGENT_MAX_ITERATIONS", "8"))
 AGENT_MAX_SAME_TOOL_CALLS = int(os.getenv("AGENT_MAX_SAME_TOOL_CALLS", "2"))
 
+# День 7 — JSONL-сессия (история messages между рестартами)
+AGENT_SESSION_DIR = os.getenv("AGENT_SESSION_DIR", "data/sessions").strip() or "data/sessions"
+AGENT_SESSION_ID = os.getenv("AGENT_SESSION_ID", "default").strip() or "default"
+
+# День 9 — управление контекстом (сжатие истории)
+# full | summary_simple | summary_facts | summary_rules
+AGENT_CONTEXT_MODE = os.getenv("AGENT_CONTEXT_MODE", "full").strip().lower() or "full"
+AGENT_KEEP_LAST = int(os.getenv("AGENT_KEEP_LAST", "6"))
+AGENT_SUMMARIZE_EVERY = int(os.getenv("AGENT_SUMMARIZE_EVERY", "10"))
+
+# Оценка стоимости (off-peak USD / 1M tokens). Peak в коде ×2.
+# Источник: https://api-docs.deepseek.com/quick_start/pricing/
+DEEPSEEK_PRICE_FLASH_INPUT_HIT_1M = float(
+    os.getenv("DEEPSEEK_PRICE_FLASH_INPUT_HIT_1M", "0.003")
+)
+DEEPSEEK_PRICE_FLASH_INPUT_MISS_1M = float(
+    os.getenv("DEEPSEEK_PRICE_FLASH_INPUT_MISS_1M", "0.15")
+)
+DEEPSEEK_PRICE_FLASH_OUTPUT_1M = float(
+    os.getenv("DEEPSEEK_PRICE_FLASH_OUTPUT_1M", "0.60")
+)
+DEEPSEEK_PRICE_PRO_INPUT_HIT_1M = float(
+    os.getenv("DEEPSEEK_PRICE_PRO_INPUT_HIT_1M", "0.022")
+)
+DEEPSEEK_PRICE_PRO_INPUT_MISS_1M = float(
+    os.getenv("DEEPSEEK_PRICE_PRO_INPUT_MISS_1M", "0.66")
+)
+DEEPSEEK_PRICE_PRO_OUTPUT_1M = float(
+    os.getenv("DEEPSEEK_PRICE_PRO_OUTPUT_1M", "1.98")
+)
+# Курс для UI (не биржевой фид) — поправьте под себя
+USD_RUB_RATE = float(os.getenv("USD_RUB_RATE", "95"))
+
+
 # День 5 — OpenRouter (сравнение моделей; ключ в .env)
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
 OPENROUTER_BASE_URL = os.getenv(

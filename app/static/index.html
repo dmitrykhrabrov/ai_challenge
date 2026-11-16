@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Agent — day 6</title>
+  <style>
+    :root {
+      --bg: #f4f4f1;
+      --fg: #1a1a1a;
+      --muted: #6b6b6b;
+      --border: #c8c8c4;
+      --panel: #ebebe6;
+      --you: #1d4ed8;
+      --you-bg: #eef4ff;
+      --ai: #15803d;
+      --ai-bg: #eefaf1;
+      --tools: #7c3aed;
+      --tools-bg: #f5f0ff;
+      --think: #b45309;
+      --err: #b91c1c;
+      --err-bg: #fef2f2;
+      --input-bg: #fff;
+      --side-w: 300px;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; height: 100%;
+      background: var(--bg); color: var(--fg);
+      font: 13px/1.45 ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 6px var(--side-w);
+      height: 100vh;
+      min-height: 320px;
+    }
+    .main {
+      display: flex; flex-direction: column;
+      min-width: 240px; min-height: 0;
+    }
+    #log {
+      flex: 1; overflow: auto; padding: 12px 14px 8px;
+    }
+    .room-dock {
+      border-top: 1px solid var(--border);
+      background: #fff;
+      padding: 8px 14px;
+      max-height: 220px;
+      overflow: auto;
+    }
+    .room-dock.hidden { display: none; }
+    .room-dock h2 { margin: 0 0 6px; font-size: 13px; }
+    .room-letter {
+      border: 1px solid #c4b5fd;
+      background: #f5f3ff;
+      padding: 6px 8px;
+      margin: 0 0 8px;
+    }
+    .room-k {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #5b21b6;
+      background: #ede9fe;
+      border-radius: 3px;
+      padding: 0 5px;
+      margin-right: 4px;
+    }
+    .room-v { font-size: 13px; }
+    .block {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      margin: 0 0 10px;
+      background: #fff;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .block.you { border-color: var(--you); background: var(--you-bg); }
+    .block.ai { border-color: var(--ai); background: var(--ai-bg); }
+    .block.ctx { border-color: var(--ai); background: var(--ai-bg); }
+    .block.err { border-color: var(--err); background: var(--err-bg); color: #7f1d1d; }
+    .label { font-weight: 700; margin-bottom: 6px; }
+    .you .label { color: var(--you); }
+    .ai .label { color: var(--ai); }
+    .err .label { color: var(--err); }
+
+    .tools-wrap {
+      border: 1px solid #c4b5fd;
+      background: var(--tools-bg);
+      padding: 6px 8px;
+      margin: 6px 0 8px;
+    }
+    .tools-head {
+      color: var(--tools);
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+      cursor: pointer;
+      user-select: none;
+    }
+    .tools-head .hint { color: var(--muted); font-weight: 400; font-size: 12px; }
+    .tools-list { margin-top: 4px; }
+    .tool-line { color: #5b21b6; }
+    .tool-meta { color: var(--muted); font-size: 12px; }
+    .tools-more {
+      color: var(--tools);
+      font-size: 12px;
+      margin-top: 4px;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .search-box {
+      width: 100%;
+      margin: 4px 0 4px;
+      font: inherit;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      padding: 5px 6px;
+      color: var(--fg);
+    }
+    .search-hits {
+      max-height: 180px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      background: #fff;
+      margin: 0 0 6px;
+      display: none;
+    }
+    .search-hits.open { display: block; }
+    .search-hit {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      background: transparent;
+      padding: 6px 8px;
+      font: inherit;
+      cursor: pointer;
+      color: var(--fg);
+    }
+    .search-hit:last-child { border-bottom: 0; }
+    .search-hit:hover { background: var(--you-bg); }
+    .search-hit .hit-sid {
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+    .search-hit .hit-snip { word-break: break-word; }
+    .search-hit .hit-role { color: var(--ai); font-size: 11px; }
+    .search-empty {
+      padding: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .status-line { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    .cost-line {
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--border);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .answer-body { margin-top: 4px; }
+
+    .composer-split {
+      height: 6px;
+      cursor: row-resize;
+      background: var(--border);
+      flex: 0 0 6px;
+      position: relative;
+    }
+    .composer-split:hover, .composer-split.active { background: #9ca3af; }
+    .composer-split::after { content: ""; position: absolute; inset: -3px 0; }
+    .composer {
+      display: flex; gap: 8px; padding: 10px 12px;
+      border-top: 0; background: var(--panel);
+      height: var(--composer-h, 120px);
+      min-height: 72px;
+      max-height: 55vh;
+      flex: 0 0 auto;
+    }
+    #prompt {
+      flex: 1; height: 100%; min-height: 0; resize: none;
+      background: var(--input-bg); color: var(--fg);
+      border: 1px solid var(--border); padding: 8px;
+      font: inherit;
+    }
+    button {
+      background: #fff; color: var(--fg);
+      border: 1px solid var(--border); padding: 6px 10px;
+      font: inherit; cursor: pointer;
+    }
+    button:hover { border-color: #888; }
+    button:disabled { opacity: 0.5; cursor: default; }
+
+    .splitter {
+      cursor: col-resize;
+      background: var(--border);
+      position: relative;
+    }
+    .splitter:hover, .splitter.active { background: #9ca3af; }
+    .splitter::after {
+      content: "";
+      position: absolute;
+      inset: 0 -3px;
+    }
+
+    .side {
+      padding: 12px; overflow: auto; background: var(--panel);
+      min-width: 180px;
+    }
+    .panel {
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+    }
+    .panel h2 {
+      margin: 0 0 8px; font-size: 13px; font-weight: 700;
+    }
+    .row {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 8px; margin: 2px 0;
+    }
+    .row .k { color: var(--muted); }
+    .row .v { color: var(--fg); text-align: right; }
+    .hint { color: var(--muted); font-size: 11px; margin-top: 8px; }
+
+    @media (max-width: 720px) {
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 6px minmax(160px, var(--side-h, 34vh));
+      }
+      .splitter { cursor: row-resize; }
+      .splitter::after { inset: -3px 0; }
+      .side { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout" id="layout">
+    <section class="main">
+      <div id="log"></div>
+      <div class="room-dock hidden" id="roomDock">
+        <h2>Переписка ролей</h2>
+        <div id="roomLog">—</div>
+      </div>
+      <div class="composer-split" id="composerSplit" title="Тяни, чтобы изменить высоту ввода"></div>
+      <div class="composer">
+        <textarea id="prompt" placeholder="Запрос агенту… (Enter — отправить, Shift+Enter — новая строка)"></textarea>
+        <button id="send" type="button">Send</button>
+      </div>
+    </section>
+    <div class="splitter" id="splitter" title="Тяни, чтобы изменить ширину"></div>
+    <aside class="side" id="side">
+      <div class="panel">
+        <h2>Request stats</h2>
+        <div id="reqStats"></div>
+      </div>
+      <div class="panel">
+        <h2>Session stats</h2>
+        <div id="sessStats"></div>
+        <div class="row" style="margin-top:6px"><span class="k">session</span><span class="v" style="max-width:160px"></span></div>
+        <select id="sessionSelect" style="width:100%;margin:4px 0 6px;font:inherit;background:#fff;border:1px solid var(--border);padding:4px"></select>
+        <input id="sessionSearch" class="search-box" type="search" placeholder="Поиск по всем чатам…" autocomplete="off" />
+        <div id="sessionSearchHits" class="search-hits" aria-live="polite"></div>
+        <div class="row"><span class="k">events</span><span class="v" id="evLabel">—</span></div>
+        <h2 style="margin-top:12px">Context (day 9)</h2>
+        <label class="hint" for="contextMode">mode</label>
+        <select id="contextMode" style="width:100%;margin:2px 0 6px;font:inherit;background:#fff;border:1px solid var(--border);padding:4px">
+          <option value="full">full — без сжатия</option>
+          <option value="summary_simple">summary_simple</option>
+          <option value="summary_facts">summary_facts</option>
+          <option value="summary_rules">summary_rules</option>
+          <option value="sliding_window">sliding_window</option>
+          <option value="sticky_facts">sticky_facts</option>
+        </select>
+        <div class="row"><span class="k">keep_last</span>
+          <input id="keepLast" type="number" min="1" max="100" value="6" style="width:64px;font:inherit;border:1px solid var(--border);padding:2px 4px" />
+        </div>
+        <div class="row"><span class="k">summarize_every</span>
+          <input id="summarizeEvery" type="number" min="1" max="200" value="10" style="width:64px;font:inherit;border:1px solid var(--border);padding:2px 4px" />
+        </div>
+        <div class="row"><span class="k">tail_tokens</span>
+          <input id="tailTokens" type="number" min="200" max="20000" value="" placeholder="—" style="width:72px;font:inherit;border:1px solid var(--border);padding:2px 4px" />
+        </div>
+        <div class="hint">Сводка: uncovered ≥ keep_last + summarize_every. Окно и факты: хвост в tail_tokens. Факты — строки «Ключ: значение» в блоках Карточка и Договор.</div>
+        <div id="contextStatus" class="hint" style="margin-top:4px">context: —</div>
+        <pre id="factsBox" class="hint" style="white-space:pre-wrap;margin:6px 0 0;max-height:180px;overflow:auto"></pre>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+          <button id="newChat" type="button">New chat</button>
+          <button id="reloadHist" type="button">Reload</button>
+          <button id="reset" type="button">Reset session</button>
+        </div>
+        <div class="hint">Поиск ищет по текстам user/assistant/tool во всех JSONL. Клик по хиту открывает чат. New chat — новый id. Reset — удалить текущий JSONL.</div>
+      </div>
+    </aside>
+  </div>
+  <script>
+    const TOOLS_PREVIEW = 5;
+    const logEl = document.getElementById("log");
+    const promptEl = document.getElementById("prompt");
+    const sendBtn = document.getElementById("send");
+    const resetBtn = document.getElementById("reset");
+    const newChatBtn = document.getElementById("newChat");
+    const reloadHistBtn = document.getElementById("reloadHist");
+    const sessionSelect = document.getElementById("sessionSelect");
+    const sessionSearch = document.getElementById("sessionSearch");
+    const sessionSearchHits = document.getElementById("sessionSearchHits");
+    const contextModeEl = document.getElementById("contextMode");
+    const keepLastEl = document.getElementById("keepLast");
+    const summarizeEveryEl = document.getElementById("summarizeEvery");
+    const tailTokensEl = document.getElementById("tailTokens");
+    const factsBoxEl = document.getElementById("factsBox");
+    const roomLogEl = document.getElementById("roomLog");
+    const roomDockEl = document.getElementById("roomDock");
+    const contextStatusEl = document.getElementById("contextStatus");
+    const layout = document.getElementById("layout");
+    const splitter = document.getElementById("splitter");
+    const composerSplit = document.getElementById("composerSplit");
+    let searchTimer = null;
+    const CTX_KEY = "agent_context_prefs";
+
+    function loadContextPrefs() {
+      try {
+        const raw = localStorage.getItem(CTX_KEY);
+        if (!raw) return;
+        const p = JSON.parse(raw);
+        if (p.mode) contextModeEl.value = p.mode;
+        if (p.keep_last) keepLastEl.value = String(p.keep_last);
+        if (p.summarize_every) summarizeEveryEl.value = String(p.summarize_every);
+        if (p.tail_tokens) tailTokensEl.value = String(p.tail_tokens);
+      } catch { /* ignore */ }
+    }
+    function saveContextPrefs() {
+      const tail = Number(tailTokensEl.value);
+      localStorage.setItem(CTX_KEY, JSON.stringify({
+        mode: contextModeEl.value,
+        keep_last: Number(keepLastEl.value) || 6,
+        summarize_every: Number(summarizeEveryEl.value) || 10,
+        tail_tokens: tail > 0 ? tail : null,
+      }));
+    }
+    function contextPayload() {
+      const payload = {
+        context_mode: contextModeEl.value || "full",
+        keep_last: Number(keepLastEl.value) || 6,
+        summarize_every: Number(summarizeEveryEl.value) || 10,
+      };
+      const tail = Number(tailTokensEl.value);
+      if (tail >= 200) payload.tail_tokens = tail;
+      return payload;
+    }
+    function roomField(label, value) {
+      const text = (value || "").trim();
+      if (!text) return "";
+      return `<div><span class="room-k">${esc(label)}</span><span class="room-v">${esc(text)}</span></div>`;
+    }
+    function paintRoom(messages) {
+      if (!roomLogEl || !roomDockEl) return;
+      const letters = (messages || []).filter((m) => m.kind === "ask" || m.kind === "handoff");
+      if (!letters.length) {
+        roomDockEl.classList.add("hidden");
+        roomLogEl.innerHTML = "";
+        return;
+      }
+      roomDockEl.classList.remove("hidden");
+      const kindLabel = { ask: "письмо", handoff: "передача версии" };
+      roomLogEl.innerHTML = letters.map((m) => {
+        return `<div class="room-letter">` +
+          roomField("тип", kindLabel[m.kind] || m.kind) +
+          roomField("от", m.from) +
+          roomField("кому", m.to) +
+          roomField("версия", m.version ? String(m.version) : "") +
+          roomField("текст", m.text) +
+          roomField("ответ", m.answer) +
+          `</div>`;
+      }).join("");
+      roomDockEl.scrollTop = roomDockEl.scrollHeight;
+    }
+    async function refreshRoom() {
+      try {
+        const r = await fetch("/api/room");
+        if (!r.ok) return;
+        const data = await r.json();
+        paintRoom(data.messages || []);
+      } catch { /* ignore */ }
+    }
+    function paintContextStatus(ctx) {
+      if (!contextStatusEl || !ctx) return;
+      const bits = [
+        ctx.mode || "?",
+        ctx.compressed ? "compressed" : "no-compress",
+        ctx.raw_tail_count != null ? `tail=${ctx.raw_tail_count}` : null,
+        ctx.covers_until_seq != null ? `cov=${ctx.covers_until_seq}` : null,
+      ].filter(Boolean);
+      contextStatusEl.textContent = "context: " + bits.join(" · ");
+      if (factsBoxEl) factsBoxEl.textContent = ctx.facts_preview || "";
+    }
+
+    const session = {
+      turns: 0,
+      prompt_tokens: 0,
+      completion_tokens: 0,
+      total_tokens: 0,
+      tool_calls: 0,
+      answer_ms: 0,
+      rub: 0,
+      usd: 0,
+      since: new Date(),
+      updated: null,
+    };
+    let meta = { model: "?", usd_rub_rate: 95, default_session_id: "default" };
+    const SID_KEY = "agent_session_id";
+    const urlSession = new URLSearchParams(location.search).get("session");
+    let chatSessionId =
+      (urlSession && urlSession.trim()) || localStorage.getItem(SID_KEY) || "default";
+    if (urlSession && urlSession.trim()) {
+      localStorage.setItem(SID_KEY, urlSession.trim());
+    }
+
+    function setSessionId(id) {
+      chatSessionId = (id || "default").trim() || "default";
+      localStorage.setItem(SID_KEY, chatSessionId);
+      if (sessionSelect) {
+        const exists = [...sessionSelect.options].some((o) => o.value === chatSessionId);
+        if (!exists) {
+          const opt = document.createElement("option");
+          opt.value = chatSessionId;
+          opt.textContent = chatSessionId + " (0)";
+          sessionSelect.appendChild(opt);
+        }
+        sessionSelect.value = chatSessionId;
+      }
+    }
+
+    function sessionLabel(s) {
+      const prev = (s.preview || "").trim();
+      const id = s.session_id || "";
+      const n = s.event_count != null ? ` (${s.event_count})` : "";
+      if (prev) {
+        const shortId = id.length > 18 ? id.slice(0, 16) + "…" : id;
+        return `${prev} · ${shortId}${n}`;
+      }
+      return `${id}${n}`;
+    }
+
+    async function refreshSessionList() {
+      try {
+        const r = await fetch("/api/sessions");
+        const data = await r.json();
+        const sessions = data.sessions || [];
+        sessionSelect.innerHTML = "";
+        const ids = new Set();
+        for (const s of sessions) {
+          ids.add(s.session_id);
+          const opt = document.createElement("option");
+          opt.value = s.session_id;
+          opt.textContent = sessionLabel(s);
+          opt.title = s.session_id + (s.preview ? "\n" + s.preview : "");
+          sessionSelect.appendChild(opt);
+        }
+        if (!ids.has(chatSessionId)) {
+          const opt = document.createElement("option");
+          opt.value = chatSessionId;
+          opt.textContent = `${chatSessionId} (0)`;
+          sessionSelect.appendChild(opt);
+        }
+        sessionSelect.value = chatSessionId;
+      } catch (err) {
+        console.error("refreshSessionList", err);
+      }
+    }
+
+    function clearSearchHits() {
+      sessionSearchHits.classList.remove("open");
+      sessionSearchHits.innerHTML = "";
+    }
+
+    function renderSearchHits(hits, q) {
+      sessionSearchHits.innerHTML = "";
+      if (!q || q.length < 2) {
+        clearSearchHits();
+        return;
+      }
+      sessionSearchHits.classList.add("open");
+      if (!hits.length) {
+        sessionSearchHits.innerHTML = `<div class="search-empty">Ничего не найдено по «${esc(q)}»</div>`;
+        return;
+      }
+      for (const h of hits) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "search-hit";
+        const role = h.role || "?";
+        const snip = h.snippet || "";
+        const prev = h.preview ? esc(h.preview) + " · " : "";
+        btn.innerHTML =
+          `<div class="hit-sid">${prev}${esc(h.session_id || "")}</div>` +
+          `<div><span class="hit-role">${esc(role)}</span> · <span class="hit-snip">${esc(snip)}</span></div>`;
+        btn.addEventListener("click", async () => {
+          clearSearchHits();
+          sessionSearch.value = "";
+          await switchSession(h.session_id);
+        });
+        sessionSearchHits.appendChild(btn);
+      }
+    }
+
+    async function runSessionSearch(q) {
+      const query = (q || "").trim();
+      if (query.length < 2) {
+        clearSearchHits();
+        return;
+      }
+      try {
+        const r = await fetch(
+          "/api/sessions/search?q=" + encodeURIComponent(query) + "&limit=40"
+        );
+        const data = await r.json();
+        renderSearchHits(data.hits || [], query);
+      } catch (err) {
+        console.error("runSessionSearch", err);
+        sessionSearchHits.classList.add("open");
+        sessionSearchHits.innerHTML = `<div class="search-empty">Ошибка поиска</div>`;
+      }
+    }
+
+    async function switchSession(id) {
+      if (!id || id === chatSessionId) return;
+      setSessionId(id);
+      paintRequest({});
+      await loadSessionHistory();
+      await refreshSessionList();
+    }
+
+    function setEventCount(n) {
+      const el = document.getElementById("evLabel");
+      if (el) el.textContent = String(n);
+    }
+
+    function clearStats() {
+      session.turns = 0;
+      session.prompt_tokens = 0;
+      session.completion_tokens = 0;
+      session.total_tokens = 0;
+      session.tool_calls = 0;
+      session.answer_ms = 0;
+      session.rub = 0;
+      session.usd = 0;
+      session.since = new Date();
+      session.updated = null;
+      paintSession();
+      paintRequest({});
+    }
+
+    function parseApiTs(raw) {
+      if (!raw || typeof raw !== "string") return null;
+      const d = new Date(raw);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+
+    /** Восстановить Session stats из stats API (JSONL), не обнулять при Reload. */
+    function applyStatsFromApi(stats) {
+      const u = (stats && stats.usage_total) || {};
+      const c = (stats && stats.cost_total) || {};
+      session.turns = Number(stats && stats.turns != null ? stats.turns : 0);
+      session.prompt_tokens = Number(u.prompt_tokens || 0);
+      session.completion_tokens = Number(u.completion_tokens || 0);
+      session.total_tokens = Number(u.total_tokens || 0);
+      session.tool_calls = Number(stats && stats.tool_calls != null ? stats.tool_calls : 0);
+      session.answer_ms = 0;
+      session.rub = Number(c.rub || 0);
+      session.usd = Number(c.usd || 0);
+      session.since = parseApiTs(stats && stats.first_ts) || new Date();
+      session.updated = parseApiTs(stats && stats.last_ts);
+      paintSession();
+    }
+
+    function fmtRub(n) {
+      if (n == null || Number.isNaN(Number(n))) return "—";
+      n = Number(n);
+      if (Math.abs(n) < 0.01) return n.toFixed(4) + " ₽";
+      return n.toFixed(2) + " ₽";
+    }
+    function fmtUsd(n) {
+      if (n == null || Number.isNaN(Number(n))) return "—";
+      return "$" + Number(n).toFixed(6);
+    }
+    function fmtSec(ms) {
+      if (ms == null) return "—";
+      return (Number(ms) / 1000).toFixed(2) + " s";
+    }
+    function esc(s) {
+      return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+    function argsStr(args) {
+      try { return JSON.stringify(args ?? {}); }
+      catch { return String(args); }
+    }
+
+    function renderRows(el, rows) {
+      el.innerHTML = rows.map(([k, v]) =>
+        `<div class="row"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`
+      ).join("");
+    }
+
+    function paintSession() {
+      renderRows(document.getElementById("sessStats"), [
+        ["Turns", session.turns],
+        ["Request tokens", session.prompt_tokens],
+        ["Answer tokens", session.completion_tokens],
+        ["Total tokens", session.total_tokens],
+        ["Tool calls", session.tool_calls],
+        ["Cost USD", fmtUsd(session.usd)],
+        ["Cost RUB", fmtRub(session.rub)],
+        ["Answer time", fmtSec(session.answer_ms)],
+        ["Since", session.since.toISOString().replace("T", " ").slice(0, 19) + " UTC"],
+        ["Updated", session.updated
+          ? session.updated.toISOString().replace("T", " ").slice(0, 19) + " UTC"
+          : "—"],
+        ["USD_RUB", meta.usd_rub_rate],
+      ]);
+    }
+
+    function paintRequest(data) {
+      const u = data.usage_total || {};
+      const c = data.cost_total || {};
+      renderRows(document.getElementById("reqStats"), [
+        ["Engine", data.model || meta.model],
+        ["Request tokens", u.prompt_tokens ?? "—"],
+        ["Answer tokens", u.completion_tokens ?? "—"],
+        ["Total tokens", u.total_tokens ?? "—"],
+        ["LLM steps", data.iterations ?? "—"],
+        ["Stopped", data.stopped_reason ?? "—"],
+        ["Peak", c.peak === true ? "yes" : c.peak === false ? "no" : "—"],
+        ["Cost USD", fmtUsd(c.usd)],
+        ["Cost RUB", fmtRub(c.rub)],
+        ["Model time", fmtSec(data.model_time_ms)],
+        ["Wall time", fmtSec(data.wall_time_ms)],
+      ]);
+    }
+
+    function addBlock(cls, labelHtml, bodyHtml) {
+      const div = document.createElement("div");
+      div.className = "block " + cls;
+      div.innerHTML = `<div class="label">${labelHtml}</div>${bodyHtml}`;
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+      return div;
+    }
+
+    /** Tools inside one AI turn: preview last N, rest expandable. */
+    function createToolsPanel(host) {
+      const wrap = document.createElement("div");
+      wrap.className = "tools-wrap";
+      wrap.innerHTML =
+        `<div class="tools-head">` +
+        `<span>Tools: <span class="count">0</span></span>` +
+        `<span class="hint">показаны последние ${TOOLS_PREVIEW}</span>` +
+        `</div>` +
+        `<div class="tools-list"></div>` +
+        `<div class="tools-more" hidden></div>`;
+      host.appendChild(wrap);
+
+      const listEl = wrap.querySelector(".tools-list");
+      const moreEl = wrap.querySelector(".tools-more");
+      const countEl = wrap.querySelector(".count");
+      const hintEl = wrap.querySelector(".hint");
+      const items = [];
+      let expanded = false;
+
+      function render() {
+        countEl.textContent = String(items.length);
+        const hidden = Math.max(0, items.length - TOOLS_PREVIEW);
+        hintEl.textContent = expanded || hidden === 0
+          ? (items.length ? `${items.length} вызов(ов)` : "")
+          : `скрыто ${hidden}, показаны последние ${TOOLS_PREVIEW}`;
+
+        const visible = expanded ? items : items.slice(-TOOLS_PREVIEW);
+        listEl.innerHTML = visible.map((t) => {
+          const line = `<div class="tool-line">${esc(t.name)} ${esc(argsStr(t.arguments))}</div>`;
+          const meta = t.meta
+            ? `<div class="tool-meta">  └─ ${esc(t.meta)}</div>`
+            : "";
+          return line + meta;
+        }).join("");
+
+        if (hidden > 0) {
+          moreEl.hidden = false;
+          moreEl.textContent = expanded
+            ? "свернуть"
+            : `развернуть все (${items.length})`;
+        } else {
+          moreEl.hidden = true;
+        }
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      moreEl.addEventListener("click", () => {
+        expanded = !expanded;
+        render();
+      });
+      wrap.querySelector(".tools-head").addEventListener("click", () => {
+        if (items.length > TOOLS_PREVIEW) {
+          expanded = !expanded;
+          render();
+        }
+      });
+
+      return {
+        push(name, arguments_) {
+          items.push({ name, arguments: arguments_ || {}, meta: null });
+          render();
+        },
+        setMetaOnLast(meta) {
+          if (!items.length) return;
+          items[items.length - 1].meta = meta;
+          render();
+        },
+      };
+    }
+
+    function costSummaryHtml(payload) {
+      const u = payload.usage_total || {};
+      const c = payload.cost_total || {};
+      const steps = (payload.llm_steps || [])
+        .map((s) => {
+          const rub = s.cost && s.cost.rub != null ? fmtRub(s.cost.rub) : "—";
+          return `#${s.iteration}:${s.kind}/${rub}`;
+        })
+        .join(" · ");
+      return (
+        `<div class="cost-line">` +
+        `tokens in=${u.prompt_tokens ?? "—"} out=${u.completion_tokens ?? "—"} ` +
+        `total=${u.total_tokens ?? "—"} · ${fmtRub(c.rub)} (${fmtUsd(c.usd)})` +
+        (steps ? `<br>steps: ${esc(steps)}` : "") +
+        `</div>`
+      );
+    }
+
+    function parseToolArgs(raw) {
+      if (raw && typeof raw === "object") return raw;
+      try { return JSON.parse(raw || "{}"); }
+      catch { return { raw }; }
+    }
+
+    function renderHistoryFromEvents(events) {
+      logEl.innerHTML = "";
+      let ai = null;
+      let bodyEl = null;
+      let tools = null;
+
+      function ensureAi() {
+        if (ai) return;
+        ai = addBlock("ai", "AI:", `<div class="status-line">restored</div><div class="ai-body"></div>`);
+        bodyEl = ai.querySelector(".ai-body");
+        tools = null;
+      }
+
+      function closeAi() {
+        ai = null;
+        bodyEl = null;
+        tools = null;
+      }
+
+      for (const e of events || []) {
+        if (e.type && e.type !== "message") continue;
+        const role = e.role;
+        if (role === "user") {
+          closeAi();
+          addBlock("you", "You:", `<div>${esc(e.content || "")}</div>`);
+          continue;
+        }
+        if (role === "assistant") {
+          ensureAi();
+          const tcs = e.tool_calls || [];
+          if (tcs.length) {
+            if (!tools) tools = createToolsPanel(bodyEl);
+            for (const tc of tcs) {
+              const fn = (tc && tc.function) || {};
+              tools.push(fn.name || "?", parseToolArgs(fn.arguments));
+            }
+          }
+          const text = (e.content == null ? "" : String(e.content)).trim();
+          if (text) {
+            const answer = document.createElement("div");
+            answer.className = "answer-body";
+            answer.textContent = text;
+            bodyEl.appendChild(answer);
+            closeAi();
+          }
+          continue;
+        }
+        if (role === "tool") {
+          ensureAi();
+          if (!tools) tools = createToolsPanel(bodyEl);
+          // если meta к последнему вызову — ок; иначе покажем имя как строку
+          let ok = "?";
+          try {
+            const parsed = JSON.parse(e.content || "{}");
+            ok = parsed.ok === true ? "ok" : parsed.ok === false ? "fail" : "?";
+          } catch { /* keep */ }
+          if (tools) tools.setMetaOnLast(ok);
+        }
+      }
+    }
+
+    async function loadSessionHistory() {
+      try {
+        const r = await fetch("/api/session/" + encodeURIComponent(chatSessionId));
+        if (!r.ok) {
+          setEventCount(0);
+          applyStatsFromApi({});
+          return;
+        }
+        const data = await r.json();
+        const events = data.events || [];
+        setEventCount(data.event_count != null ? data.event_count : events.length);
+        applyStatsFromApi(data.stats || {});
+        if (events.length) {
+          renderHistoryFromEvents(events);
+        } else {
+          logEl.innerHTML = "";
+        }
+      } catch (err) {
+        console.error("loadSessionHistory", err);
+        setEventCount("err");
+      }
+    }
+
+    async function loadMeta() {
+      try {
+        const r = await fetch("/api/meta");
+        meta = await r.json();
+        if (!localStorage.getItem(SID_KEY) && meta.default_session_id) {
+          setSessionId(meta.default_session_id);
+        } else {
+          setSessionId(chatSessionId);
+        }
+        loadContextPrefs();
+        if (!localStorage.getItem(CTX_KEY)) {
+          if (meta.context_mode) contextModeEl.value = meta.context_mode;
+          if (meta.keep_last) keepLastEl.value = String(meta.keep_last);
+          if (meta.summarize_every) summarizeEveryEl.value = String(meta.summarize_every);
+          if (meta.tail_tokens) tailTokensEl.value = String(meta.tail_tokens);
+        }
+      } catch {
+        setSessionId(chatSessionId);
+        loadContextPrefs();
+      }
+      paintSession();
+      paintRequest({});
+      await refreshSessionList();
+      await loadSessionHistory();
+    }
+
+    async function runAgent(text) {
+      sendBtn.disabled = true;
+      addBlock("you", "You:", `<div>${esc(text)}</div>`);
+
+      const ai = addBlock("ai", "AI:", `<div class="status-line">…</div><div class="ai-body"></div>`);
+      const statusEl = ai.querySelector(".status-line");
+      const bodyEl = ai.querySelector(".ai-body");
+      let tools = null;
+      let waitTimer = null;
+
+      function armWait(label) {
+        const t0 = performance.now();
+        if (waitTimer) clearInterval(waitTimer);
+        const tick = () => {
+          const sec = Math.max(0, Math.round((performance.now() - t0) / 1000));
+          statusEl.textContent = `${label} · ${sec} с`;
+        };
+        tick();
+        waitTimer = setInterval(tick, 500);
+      }
+      function stopWait() {
+        if (waitTimer) clearInterval(waitTimer);
+        waitTimer = null;
+      }
+
+      function handleEvent(ev, payload) {
+        if (ev === "llm_start") {
+          armWait(`LLM #${payload.iteration}`);
+          return;
+        }
+        if (ev === "llm_done") {
+          stopWait();
+          const kind = payload.step_kind || "";
+          const cost = payload.cost || {};
+          statusEl.textContent =
+            `LLM #${payload.iteration} [${kind === "final" ? "FINAL" : "tools"}] ` +
+            `${fmtSec(payload.duration_ms)} · ${fmtRub(cost.rub)}`;
+          if (kind === "tools" && !tools) tools = createToolsPanel(bodyEl);
+          return;
+        }
+        if (ev === "tool_call") {
+          if (!tools) tools = createToolsPanel(bodyEl);
+          tools.push(payload.name, payload.arguments);
+          return;
+        }
+        if (ev === "tool_done") {
+          if (!tools) return;
+          const ok = payload.ok === true ? "ok" : payload.ok === false ? "fail" : "?";
+          tools.setMetaOnLast(`${ok} ${fmtSec(payload.duration_ms)}`);
+          return;
+        }
+        if (ev === "error") {
+          stopWait();
+          statusEl.textContent = "error";
+          addBlock("err", "Error:", `<div>${esc(payload.detail || JSON.stringify(payload))}</div>`);
+          return;
+        }
+        if (ev === "context_compress_start") {
+          armWait(`сжатие · ${payload.chunk_msgs || "?"} msgs`);
+          paintContextStatus({
+            mode: payload.mode,
+            compressed: false,
+            raw_tail_count: null,
+            covers_until_seq: null,
+          });
+          if (contextStatusEl) {
+            contextStatusEl.textContent =
+              `context: compressing… uncovered=${payload.uncovered_before} chunk=${payload.chunk_msgs}`;
+          }
+          return;
+        }
+        if (ev === "context_compress") {
+          const dur = payload.duration_ms != null ? fmtSec(payload.duration_ms) : "—";
+          paintContextStatus({
+            mode: payload.mode,
+            compressed: true,
+            raw_tail_count: payload.raw_tail_count,
+            covers_until_seq: payload.covers_until_seq,
+          });
+          armWait("ответ модели");
+          const u = payload.usage || {};
+          const ctxCard = document.createElement("div");
+          ctxCard.className = "block ctx";
+          ctxCard.innerHTML =
+            `<div class="label">Context:</div>` +
+            `<div class="status-line">summary updated · ${esc(dur)}</div>` +
+            `<div>uncovered ${esc(String(payload.uncovered_before))} → tail ${esc(String(payload.raw_tail_count))}; ` +
+            `chunk=${esc(String(payload.chunk_msgs || "?"))}; chars=${esc(String(payload.summary_chars || 0))}; ` +
+            `tokens in=${esc(String(u.prompt_tokens ?? "—"))} out=${esc(String(u.completion_tokens ?? "—"))}</div>`;
+          ai.before(ctxCard);
+          logEl.scrollTop = logEl.scrollHeight;
+          return;
+        }
+        if (ev === "room") {
+          refreshRoom();
+          return;
+        }
+        if (ev === "result") {
+          stopWait();
+          const answer = document.createElement("div");
+          answer.className = "answer-body";
+          answer.textContent = payload.answer || "";
+          bodyEl.appendChild(answer);
+          bodyEl.insertAdjacentHTML("beforeend", costSummaryHtml(payload));
+          statusEl.textContent =
+            `done · stopped=${payload.stopped_reason} · ${fmtSec(payload.wall_time_ms)}`;
+
+          paintRequest(payload);
+          paintContextStatus(payload.context || {});
+          const u = payload.usage_total || {};
+          const c = payload.cost_total || {};
+          session.turns += 1;
+          session.prompt_tokens += Number(u.prompt_tokens || 0);
+          session.completion_tokens += Number(u.completion_tokens || 0);
+          session.total_tokens += Number(u.total_tokens || 0);
+          session.tool_calls += (payload.tool_trace || []).length;
+          session.answer_ms += Number(payload.wall_time_ms || 0);
+          session.rub += Number(c.rub || 0);
+          session.usd += Number(c.usd || 0);
+          session.updated = new Date();
+          paintSession();
+          refreshRoom();
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+      }
+
+      try {
+        const res = await fetch("/agent/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: text,
+            session_id: chatSessionId,
+            ...contextPayload(),
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.text();
+          statusEl.textContent = "error";
+          addBlock("err", "Error:", `<div>${esc(err)}</div>`);
+          return;
+        }
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = "";
+        let sawTerminal = false;
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          const parts = buf.split("\n\n");
+          buf = parts.pop() || "";
+          for (const chunk of parts) {
+            const lines = chunk.split("\n");
+            let ev = "message";
+            let data = "";
+            for (const line of lines) {
+              if (line.startsWith("event:")) ev = line.slice(6).trim();
+              if (line.startsWith("data:")) data += line.slice(5).trim();
+            }
+            if (!data) continue;
+            let payload;
+            try { payload = JSON.parse(data); }
+            catch { continue; }
+            if (ev === "result" || ev === "error") sawTerminal = true;
+            handleEvent(ev, payload);
+          }
+        }
+        // поток оборвался без result/error — иначе запись видео ждёт status вечно
+        if (!sawTerminal) {
+          const cur = (statusEl.textContent || "").trim();
+          if (!cur.startsWith("done") && !cur.startsWith("error")) {
+            statusEl.textContent = "error";
+            addBlock("err", "Error:", `<div>Поток /agent/stream завершился без result</div>`);
+          }
+        }
+      } catch (e) {
+        statusEl.textContent = "error";
+        addBlock("err", "Error:", `<div>${esc(e.message || e)}</div>`);
+      } finally {
+        stopWait();
+        sendBtn.disabled = false;
+      }
+    }
+
+    function submitPrompt() {
+      const t = promptEl.value.trim();
+      if (!t || sendBtn.disabled) return;
+      promptEl.value = "";
+      runAgent(t);
+    }
+
+    /* --- resizable side panel + composer height --- */
+    (function initSplitters() {
+      const KEY_SIDE = "agent_ui_side";
+      const KEY_COMP = "agent_ui_composer_h";
+      const savedSide = localStorage.getItem(KEY_SIDE);
+      const savedComp = localStorage.getItem(KEY_COMP);
+      if (savedSide) {
+        if (window.matchMedia("(max-width: 720px)").matches) {
+          document.documentElement.style.setProperty("--side-h", savedSide);
+        } else {
+          document.documentElement.style.setProperty("--side-w", savedSide);
+        }
+      }
+      if (savedComp) {
+        document.documentElement.style.setProperty("--composer-h", savedComp);
+      }
+
+      let mode = null; // "side" | "composer"
+      function stopDrag() {
+        mode = null;
+        splitter.classList.remove("active");
+        composerSplit.classList.remove("active");
+      }
+      splitter.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        mode = "side";
+        splitter.classList.add("active");
+      });
+      composerSplit.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        mode = "composer";
+        composerSplit.classList.add("active");
+      });
+      window.addEventListener("mouseup", stopDrag);
+      window.addEventListener("mousemove", (e) => {
+        if (!mode) return;
+        if (mode === "side") {
+          const mobile = window.matchMedia("(max-width: 720px)").matches;
+          if (mobile) {
+            const h = Math.min(Math.max(window.innerHeight - e.clientY, 140), window.innerHeight * 0.7);
+            const val = h + "px";
+            document.documentElement.style.setProperty("--side-h", val);
+            localStorage.setItem(KEY_SIDE, val);
+          } else {
+            const w = Math.min(Math.max(window.innerWidth - e.clientX, 180), window.innerWidth * 0.55);
+            const val = w + "px";
+            document.documentElement.style.setProperty("--side-w", val);
+            localStorage.setItem(KEY_SIDE, val);
+          }
+          return;
+        }
+        if (mode === "composer") {
+          const main = layout.querySelector(".main");
+          const rect = main.getBoundingClientRect();
+          const h = Math.min(Math.max(rect.bottom - e.clientY, 72), rect.height * 0.55);
+          const val = Math.round(h) + "px";
+          document.documentElement.style.setProperty("--composer-h", val);
+          localStorage.setItem(KEY_COMP, val);
+        }
+      });
+    })();
+
+    sendBtn.addEventListener("click", submitPrompt);
+    sessionSelect.addEventListener("change", () => {
+      switchSession(sessionSelect.value);
+    });
+    sessionSearch.addEventListener("input", () => {
+      const q = sessionSearch.value;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => runSessionSearch(q), 280);
+    });
+    sessionSearch.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        sessionSearch.value = "";
+        clearSearchHits();
+      }
+    });
+    contextModeEl.addEventListener("change", saveContextPrefs);
+    keepLastEl.addEventListener("change", saveContextPrefs);
+    summarizeEveryEl.addEventListener("change", saveContextPrefs);
+    tailTokensEl.addEventListener("change", saveContextPrefs);
+    reloadHistBtn.addEventListener("click", async () => {
+      await loadSessionHistory();
+      await refreshSessionList();
+    });
+    newChatBtn.addEventListener("click", async () => {
+      try {
+        const r = await fetch("/api/session/new", { method: "POST" });
+        const data = await r.json();
+        setSessionId(data.session_id || ("chat-" + Date.now()));
+      } catch {
+        setSessionId("chat-" + Date.now());
+      }
+      logEl.innerHTML = "";
+      setEventCount(0);
+      clearStats();
+      await refreshSessionList();
+    });
+    resetBtn.addEventListener("click", async () => {
+      if (!confirm("Удалить JSONL текущей сессии " + chatSessionId + "?")) return;
+      try {
+        await fetch("/api/session/" + encodeURIComponent(chatSessionId) + "/reset", {
+          method: "POST",
+        });
+      } catch { /* ignore */ }
+      logEl.innerHTML = "";
+      setEventCount(0);
+      clearStats();
+      await refreshSessionList();
+    });
+    promptEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        submitPrompt();
+      }
+    });
+
+    loadMeta();
+    refreshRoom();
+    setInterval(refreshRoom, 2000);
+  </script>
+</body>
+</html>
